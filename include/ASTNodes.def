@@ -1,0 +1,28 @@
+/// X macro pattern for reducing declaration clutter
+#define AST_NODES \
+    X(TranslationUnit) \
+    X(IntegerLiteral) \
+    X(FloatLiteral) \
+    X(BoolLiteral) \
+    X(StringLiteral) \
+    X(Identifier) \
+    X(LValue) \
+    X(LValueIdent) \
+    X(VarDecl) \
+    X(CompoundStmt) \
+    X(Statement) \
+    X(Expression) \
+    X(Assignment) \
+    X(ValueStmt) \
+    X(Return) \
+    X(If) \
+    X(While) \
+    X(BinaryOperator) \
+    X(Arguments)\
+    X(Call) \
+    X(Parameters) \
+    X(Class) \
+    X(Classes) \
+    X(Method) \
+    X(Methods) \
+    X(MemberAccess)

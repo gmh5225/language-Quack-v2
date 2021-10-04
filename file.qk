@@ -1,0 +1,13 @@
+y: Bool = True;
+
+if y {
+  if False {
+    z = 1;
+  } else {
+    z = 2;
+  }
+} else {
+  z = 3;
+}
+
+return z;
