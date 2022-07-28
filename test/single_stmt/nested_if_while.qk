@@ -1,0 +1,6 @@
+if (True) { while(True){return 1;} }
+elif (False) { while(True){return 2;} }
+elif (True) { while(True){return 3;} }
+elif (False) { while(True){return 4;} }
+elif (True) { while(True){return 5;} }
+else { while(True){return 6;} }

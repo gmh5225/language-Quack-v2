@@ -9,7 +9,10 @@
 #include <utility>
 #include <vector>
 
-namespace quack::ast {
+namespace quack {
+
+namespace ast {
+
 /// Abstract node class, the base for every other AST node
 class ASTNode {
   const Location _loc;
@@ -19,14 +22,13 @@ protected:
 
 public:
   const Location &getLocation() const { return _loc; }
-
   virtual ~ASTNode() = default;
 };
 
-class CompoundStmt; /// Forward ref
+class CompoundStmt; // Forward ref
 class Classes;
 
-/// A TranslationUnit is the root of an AST, represents a file
+/// A TranslationUnit is the root of an AST
 class TranslationUnit : public ASTNode {
   std::unique_ptr<Classes> _classes;
   std::unique_ptr<CompoundStmt> _compoundStmt;
@@ -41,79 +43,16 @@ public:
   const Classes &getClasses() const { return *_classes; }
 };
 
-/// Abstract Sequence type
-template <typename Kind> class Sequence : public ASTNode {
-  class Iterator {
-  private:
-    unsigned _index;
-    const std::vector<std::unique_ptr<Kind>> &_vector;
-
-  public:
-    /// Iterator for Sequence type
-    Iterator(const std::vector<std::unique_ptr<Kind>> &vector, unsigned index)
-        : _vector(vector), _index(index) {}
-
-    Iterator &operator++() {
-      _index++;
-      return *this;
-    }
-
-    Iterator operator++(int) {
-      Iterator it = *this;
-      ++(*this);
-      return it;
-    }
-
-    Iterator &operator--() {
-      _index--;
-      return *this;
-    }
-
-    Iterator operator--(int) {
-      Iterator it = *this;
-      --(*this);
-      return it;
-    }
-
-    Kind &operator*() { return *(_vector[_index]); }
-
-    Kind *operator->() { return _vector[_index].get(); }
-
-    bool operator==(const Iterator &other) const {
-      return _index == other._index;
-    }
-
-    bool operator!=(const Iterator &other) const { return !(*this == other); }
-  }; // Iterator
-
-protected:
-  std::vector<std::unique_ptr<Kind>> _sequence;
-
-  explicit Sequence(const Location &loc) : ASTNode(loc), _sequence() {}
-
-public:
-  using SeqType = Kind;
-
-  const auto &getSequence() const { return _sequence; }
-
-  const bool isEmpty() const { return _sequence.size() == 0; }
-
-  void append(std::unique_ptr<Kind> element) {
-    _sequence.emplace_back(std::move(element));
-  }
-
-  /// Setting up an iterator
-  /// Returns an iterator of vector of type T
-  Iterator begin() const { return Iterator(_sequence, 0); }
-
-  Iterator end() const { return Iterator(_sequence, _sequence.size()); }
-};
-
-/// Abstract Statement type, DeclStmt, IfStmt, WhileStmt, etc. are the concrete
-/// types
 class Statement : public ASTNode {
 public:
-  enum class Kind { ValueStmt, Assignment, Return, If, While, Print };
+  enum class Kind {
+    ValueStmt,
+    Assignment,
+    StaticAssignment,
+    Return,
+    If,
+    While
+  };
 
   Kind getKind() const { return _kind; }
 
@@ -124,22 +63,22 @@ private:
   Kind _kind;
 };
 
+template <typename T> using Sequence = std::vector<std::unique_ptr<T>>;
+
 /// A block of statements
-class CompoundStmt : public Sequence<Statement> {
+class CompoundStmt : public Sequence<Statement>, public ASTNode {
 public:
-  explicit CompoundStmt(const Location &loc) : Sequence<Statement>(loc) {}
+  explicit CompoundStmt(const Location &loc) : ASTNode(loc) {}
+  bool hasReturn() const;
 };
 
-/// An Expression is either and LValue (has storage) or RValue (no storage)
-/// If RValue, it can be primitive literal, or binary operator
-
+/// An Expression is either and LValue (has storage) or RValue
 class Expression : public ASTNode {
 public:
   enum class Kind {
     Call,
     BinaryOperator,
     UnaryOperator,
-    Identifier,
     LValue,
     IntegerLiteral,
     FloatLiteral,
@@ -148,11 +87,7 @@ public:
   };
 
   Kind getKind() const { return _kind; }
-
-  bool isLValue() const {
-    return _kind == Kind::LValue || _kind == Kind::Identifier ||
-           _kind == Kind::Call;
-  }
+  bool isLValue() const { return _kind == Kind::LValue; }
 
 protected:
   explicit Expression(Location loc, Kind kind)
@@ -162,7 +97,6 @@ private:
   Kind _kind;
 };
 
-/// Statements that could hold a value
 class ValueStmt : public Statement {
   std::unique_ptr<Expression> _expr;
 
@@ -176,7 +110,7 @@ public:
 
 class UnaryOperator : public Expression {
 public:
-  enum class Operator { Print, Negate };
+  enum class Operator { Neg, Not };
 
 private:
   Operator _opCode;
@@ -188,13 +122,10 @@ public:
       : Expression(std::move(loc), Expression::Kind::UnaryOperator),
         _opCode(opCode), _operand(std::move(operand)) {}
 
-  const Expression &getOperand() { return *_operand; }
-  const Operator getOpCode() { return _opCode; }
+  const Expression &getOperand() const { return *_operand; }
+  const Operator getOpCode() const { return _opCode; }
 };
 
-/// Binary operations:
-///  a = b, a + b, a - b, etc.
-/// comprised of two Expressions and an OpCode
 class BinaryOperator : public Expression {
 public:
   enum class Operator {
@@ -204,19 +135,13 @@ public:
     Divide,
     Modulo,
     Equals,
+    NotEquals,
     Greater,
     GreaterEqual,
     Less,
     LessEqual
   };
 
-private:
-  Operator _opCode;
-  std::unique_ptr<Expression> _leftHandSide;
-  std::unique_ptr<Expression> _rightHandSide;
-  const static std::map<Operator, const char *> OpCodeStringLookUp;
-
-public:
   BinaryOperator(Location loc, Operator opCode,
                  std::unique_ptr<Expression> leftHandSide,
                  std::unique_ptr<Expression> rightHandSide)
@@ -224,75 +149,55 @@ public:
         _opCode(opCode), _leftHandSide(std::move(leftHandSide)),
         _rightHandSide(std::move(rightHandSide)) {}
 
-  bool isCompare() const {
-    return _opCode == Operator::Equals || _opCode == Operator::Greater ||
-           _opCode == Operator::GreaterEqual || _opCode == Operator::Less ||
-           _opCode == Operator::LessEqual;
-  }
-
   Operator getOpCode() const { return _opCode; }
-
-  const char *getOpCodeString() const { return OpCodeStringLookUp.at(_opCode); }
-
-  static const std::map<Operator, const char *> &getOperators() {
-    return OpCodeStringLookUp;
-  }
-
   const Expression &getLHS() const { return *_leftHandSide; }
-
   const Expression &getRHS() const { return *_rightHandSide; }
-};
-
-/// An Identifier token, such as type name, variable name, etc.
-/// It's essentially an l-value reference
-class Identifier final : public Expression {
-public:
-  Identifier(Location loc, const std::string &name)
-      : Expression(std::move(loc), Expression::Kind::Identifier), _name(name){};
-
-  Identifier(Location loc, std::string *name)
-      : Expression(std::move(loc), Expression::Kind::Identifier),
-        _name(*name){};
-
-  const std::string &getName() const { return _name; }
 
 private:
+  Operator _opCode;
+  std::unique_ptr<Expression> _leftHandSide;
+  std::unique_ptr<Expression> _rightHandSide;
+};
+
+class Identifier final : public ASTNode {
   const std::string _name;
+
+public:
+  Identifier(Location loc, const std::string &name)
+      : ASTNode(std::move(loc)), _name(name){};
+
+  const std::string &getName() const { return _name; }
 };
 
 class LValue : public Expression {
 public:
-  enum class Kind { VarDecl, LValueIdent, MemberAccess };
+  enum class Kind { LValueIdent, MemberAccess };
+
+  Kind getKind() const { return _kind; }
 
 protected:
   Kind _kind;
 
   LValue(Location loc, Kind kind)
       : Expression(std::move(loc), Expression::Kind::LValue), _kind(kind) {}
-
-public:
-  Kind getKind() const { return _kind; }
-
-  virtual const std::string &getSymbol() const = 0;
 };
 
 class MemberAccess final : public LValue {
   friend class StaticMemberDecl;
   std::unique_ptr<Identifier> _member;
-  std::unique_ptr<Expression> _expr;
-  std::string _symbol;
+  std::unique_ptr<Expression> _obj;
 
 public:
   MemberAccess(const Location loc, std::unique_ptr<Identifier> member,
                std::unique_ptr<Expression> object)
       : LValue(loc, LValue::Kind::MemberAccess), _member(std::move(member)),
-        _expr(std::move(object)), _symbol(_member->getName()) {}
+        _obj(std::move(object)) {}
 
   const Identifier &getMember() const { return *_member; }
-  const std::string &getSymbol() const override { return _symbol; }
-  const Expression &getExpression() const { return *_expr; }
+  const Expression &getObject() const { return *_obj; }
 };
 
+// An Identifier that is an LValue
 class LValueIdent final : public LValue {
   std::unique_ptr<Identifier> _var;
   bool _isWeak;
@@ -304,54 +209,39 @@ public:
         _isWeak(isWeak) {}
 
   const Identifier &getVar() const { return *_var; }
-
-  const std::string &getSymbol() const override { return _var->getName(); }
-
   bool isWeak() const { return _isWeak; }
 };
 
-/// Defines a variable declaration
-/// Either declared with a value or without value
-class VarDecl : public LValue {
+class VarDecl : public ASTNode {
 protected:
   std::unique_ptr<Identifier> _type;
   std::unique_ptr<Identifier> _var;
-  bool _isWeak;
-  bool _isMemberDecl;
+  bool memberDecl;
 
 public:
   VarDecl(const Location &loc, std::unique_ptr<Identifier> var,
-          std::unique_ptr<Identifier> type, bool isMemberDecl = false,
-          bool isWeak = false)
-      : LValue(std::move(loc), LValue::Kind::VarDecl), _var(std::move(var)),
-        _type(std::move(type)), _isWeak(isWeak), _isMemberDecl(isMemberDecl) {}
+          std::unique_ptr<Identifier> type, bool isMemberDecl = false)
+      : ASTNode(std::move(loc)), _var(std::move(var)), _type(std::move(type)),
+        memberDecl(isMemberDecl) {}
 
   VarDecl(const Location &loc, std::unique_ptr<VarDecl> other)
-      : LValue(std::move(loc), LValue::Kind::VarDecl),
-        _var(std::move(other->_var)), _type(std::move(other->_type)) {}
+      : ASTNode(std::move(loc)), _var(std::move(other->_var)),
+        _type(std::move(other->_type)) {}
 
   const Identifier &getType() const { return *_type; }
-
   const Identifier &getVar() const { return *_var; }
-
-  const std::string &getSymbol() const override { return _var->getName(); }
-
-  bool isWeak() const { return _isWeak; }
-
-  bool isMemberDecl() const { return _isMemberDecl; }
+  bool isMemberDecl() const { return memberDecl;}
 };
 
 class StaticMemberDecl final : public VarDecl {
-  const std::string _symbol;
   std::unique_ptr<Expression> _object;
 
 public:
   StaticMemberDecl(Location loc, std::unique_ptr<MemberAccess> var,
-                   std::unique_ptr<Identifier> type, bool isWeak = false)
-      : VarDecl(loc, std::move(var->_member), std::move(type), true, isWeak),
-        _object(std::move(var->_expr)), _symbol(_var->getName()) {}
+                   std::unique_ptr<Identifier> type)
+      : VarDecl(loc, std::move(var->_member), std::move(type), true),
+        _object(std::move(var->_obj)) {}
 
-  const std::string &getSymbol() const override { return _symbol; }
   const Expression &getObject() const { return *_object; }
 };
 
@@ -366,15 +256,26 @@ public:
       : Statement(std::move(loc), Statement::Kind::Assignment),
         _lvalue(std::move(lvalue)), _rvalue(std::move(rvalue)) {}
 
-  const LValue &getLeftHandSide() const { return *_lvalue; }
-  const Expression &getRightHandSide() const { return *_rvalue; }
+  const LValue &getLHS() const { return *_lvalue; }
+  const Expression &getRHS() const { return *_rvalue; }
 };
 
-/// Leaf of AST
-/// An IntegerLiteral is an RValue Expression
-/// It is stored as a long integer (8 bytes)
+class StaticAssignment : public Statement {
+protected:
+  std::unique_ptr<VarDecl> _decl;
+  std::unique_ptr<Expression> _rvalue;
+
+public:
+  StaticAssignment(Location loc, std::unique_ptr<VarDecl> decl,
+                   std::unique_ptr<Expression> rvalue)
+      : Statement(std::move(loc), Statement::Kind::StaticAssignment),
+        _decl(std::move(decl)), _rvalue(std::move(rvalue)) {}
+
+  const VarDecl &getDecl() const { return *_decl; }
+  const Expression &getRHS() const { return *_rvalue; }
+};
+
 class IntegerLiteral final : public Expression {
-private:
   long int _integer;
 
 public:
@@ -386,7 +287,6 @@ public:
 };
 
 class FloatLiteral final : public Expression {
-private:
   double _float;
 
 public:
@@ -398,7 +298,6 @@ public:
 };
 
 class BoolLiteral final : public Expression {
-private:
   bool _bool;
 
 public:
@@ -432,14 +331,14 @@ public:
   }
 };
 
-class Arguments final : public Sequence<Expression> {
+class Arguments final : public Sequence<Expression>, public ASTNode {
 public:
-  explicit Arguments(const Location &loc) : Sequence<Expression>(loc) {}
+  explicit Arguments(const Location &loc) : ASTNode(loc) {}
 };
 
-class Parameters final : public Sequence<VarDecl> {
+class Parameters final : public Sequence<VarDecl>, public ASTNode {
 public:
-  explicit Parameters(const Location &loc) : Sequence<VarDecl>(loc) {}
+  explicit Parameters(const Location &loc) : ASTNode(loc) {}
 };
 
 class Method final : public ASTNode {
@@ -462,9 +361,9 @@ public:
   const CompoundStmt &getBody() const { return *_body; }
 };
 
-class Methods final : public Sequence<Method> {
+class Methods final : public Sequence<Method>, public ASTNode {
 public:
-  explicit Methods(const Location &loc) : Sequence<Method>(loc) {}
+  explicit Methods(const Location &loc) : ASTNode(loc) {}
 };
 
 class Class final : public ASTNode {
@@ -488,9 +387,9 @@ public:
   const Methods &getMethods() const { return *_methods; }
 };
 
-class Classes final : public Sequence<Class> {
+class Classes final : public Sequence<Class>, public ASTNode {
 public:
-  explicit Classes(const Location &loc) : Sequence<Class>(loc) {}
+  explicit Classes(const Location &loc) : ASTNode(loc) {}
 };
 
 class Call final : public Expression {
@@ -527,6 +426,7 @@ public:
   const Expression &getCond() const { return *_cond; }
   const CompoundStmt &getIfBlock() const { return *_ifStmts; }
   const CompoundStmt *getElseBlock() const { return _elseStmts.get(); }
+  bool hasElse() const { return _elseStmts != nullptr; }
 };
 
 class While final : public Statement {
@@ -543,6 +443,8 @@ public:
   const CompoundStmt &getBlock() const { return *_block; }
 };
 
-} // namespace quack::ast
+} // namespace ast
+
+} // namespace quack
 
 #endif // AST_HPP

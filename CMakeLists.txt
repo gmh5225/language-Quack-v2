@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 project(Quack)
 set(CMAKE_CXX_VISIBILITY_PRESET default)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-find_package(BISON 3.7.1)
-find_package(FLEX 2.6.4)
-find_package(LLVM REQUIRED CONFIG)
+find_package(BISON 3.7.1 REQUIRED)
+find_package(FLEX 2.6.4 REQUIRED)
+find_package(LLVM 10.0.0 REQUIRED)
 
 message(STATUS "LLVM DIR: ${LLVM_DIR}")
 message(STATUS "LLVM INCLUDE DIR: ${LLVM_INCLUDE_DIRS}")
@@ -25,14 +25,24 @@ include_directories(${LLVM_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} include)
 # that we wish to use
 llvm_map_components_to_libnames(llvm_libs support core irreader target native executionengine mcjit linker passes)
 
-file(GLOB SOURCES "src/*.cpp")
-
 add_executable(
         quack
-        ${SOURCES}
         ${BISON_Parser_OUTPUTS}
         ${FLEX_Lexer_OUTPUTS}
-        src/TypeInfo.cpp include/TypeCodeGen.hpp src/TypeCodeGen.cpp src/Type.cpp
-        src/ClassesChecker.cpp src/ClassesCodeGen.cpp)
+        src/AST.cpp
+        src/Builtin.cpp
+        src/Environment.cpp
+        src/EnvironmentBuilder.cpp
+        src/ExprTypeChecker.cpp
+        src/FnCodeGen.cpp
+        src/LLVMType.cpp
+        src/main.cpp
+        src/ParserDriver.cpp
+        src/PrintVisitor.cpp
+        src/QType.cpp
+        src/QTypeDB.cpp
+        src/StmtTypeChecker.cpp
+        src/TypeChecker.cpp
+        src/Utils.cpp)
 
 target_link_libraries(quack ${llvm_libs})

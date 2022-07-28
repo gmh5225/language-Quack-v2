@@ -7,205 +7,220 @@
 
 namespace quack::ast {
 
-bool PrintVisitor::traverseTranslationUnit(const TranslationUnit &translationUnit) const {
+void PrintVisitor::visitTranslationUnit(
+    const TranslationUnit &translationUnit)  {
   emitln("TranslationUnit ");
   indent(IndentationType::DiagBar);
-  auto retVal = traverseCompoundStmt(translationUnit.getCompoundStmt());
+  visitCompoundStmt(translationUnit.getCompoundStmt());
   dedent();
-  return retVal;
 }
 
-bool PrintVisitor::traverseIntegerLiteral(const IntegerLiteral &integerLiteral) const {
+void PrintVisitor::visitIntegerLiteral(
+    const IntegerLiteral &integerLiteral)  {
   emitln("IntegerLiteral "
-         "("
-         + std::to_string(integerLiteral.getInteger()) + ")");
-  return true;
+         "(" +
+         std::to_string(integerLiteral.getInteger()) + ")");
 }
 
-bool PrintVisitor::traverseFloatLiteral(const FloatLiteral &floatLiteral) const {
+void PrintVisitor::visitFloatLiteral(
+    const FloatLiteral &floatLiteral)  {
   emitln("FloatLiteral "
-         "("
-         + std::to_string(floatLiteral.getFloat()) + ")");
-  return true;
+         "(" +
+         std::to_string(floatLiteral.getFloat()) + ")");
 }
 
-bool PrintVisitor::traverseBoolLiteral(const BoolLiteral &boolLiteral) const {
+void PrintVisitor::visitBoolLiteral(const BoolLiteral &boolLiteral)  {
   emitln("BoolLiteral "
-         "("
-         + std::to_string(boolLiteral.getBool()) + ")");
-  return true;
+         "(" +
+         std::to_string(boolLiteral.getBool()) + ")");
 }
 
-bool PrintVisitor::traverseStringLiteral(const StringLiteral &stringLiteral) const {
+void PrintVisitor::visitStringLiteral(
+    const StringLiteral &stringLiteral)  {
   emitln("StringLiteral "
-         "("
-             + stringLiteral.getText() + ")");
-  return true;
+         "(" +
+         stringLiteral.getText() + ")");
 }
 
-bool PrintVisitor::traverseIdentifier(const Identifier &identifier) const {
+void PrintVisitor::visitIdentifier(const Identifier &identifier)  {
   emitln("Identifier "
-         "("
-         + identifier.getName() + ")");
-  return true;
+         "(" +
+         identifier.getName() + ")");
 }
 
-bool PrintVisitor::traverseVarDecl(const VarDecl &varDecl) const {
+void PrintVisitor::visitVarDecl(const VarDecl &varDecl)  {
   emitln("VarDecl ");
   indent(IndentationType::VertBar);
-  auto retVal = traverseIdentifier(varDecl.getVar());
+  visitIdentifier(varDecl.getVar());
   dedent();
-
-  if (retVal) {
-    indent(IndentationType::DiagBar);
-    retVal = traverseIdentifier(varDecl.getType());
-    dedent();
-  }
-  return retVal;
+  indent(IndentationType::DiagBar);
+  visitIdentifier(varDecl.getType());
+  dedent();
 }
 
-bool PrintVisitor::traverseLValueIdent(const LValueIdent &lValue) const {
+void PrintVisitor::visitLValueIdent(const LValueIdent &lValue)  {
   emitln("LValueIdent ");
   indent(IndentationType::DiagBar);
-  auto retVal = traverseIdentifier(lValue.getVar());
+  visitIdentifier(lValue.getVar());
   dedent();
-  return retVal;
 }
 
-bool PrintVisitor::traverseCompoundStmt(const CompoundStmt &compoundStmt) const {
+void PrintVisitor::visitCompoundStmt(
+    const CompoundStmt &compoundStmt)  {
   emitln("CompoundStmt ");
   auto retVal = true;
   /// stmt a unique_ptr to a statement
   for (auto stmt = compoundStmt.begin(); stmt != compoundStmt.end(); stmt++) {
-    if (retVal) {
-      if (stmt == --compoundStmt.end())
-        indent(IndentationType::DiagBar);
-      else
-        indent(IndentationType::VertBar);
-      retVal = traverseStatement(*stmt);
-      dedent();
-    } else
-      return false;
-  }
-  return retVal;
-}
-
-bool PrintVisitor::traverseAssignment(const Assignment &assignment) const {
-  emitln("Assignment ");
-  indent(IndentationType::VertBar);
-  auto retval = traverseLValue(assignment.getLeftHandSide());
-  dedent();
-  indent(IndentationType::DiagBar);
-  if (retval) {
-    retval = traverseExpression(assignment.getRightHandSide());
-  }
-  dedent();
-  return retval;
-}
-
-bool PrintVisitor::traverseValueStmt(const ValueStmt &valueStmt) const {
-  emitln("ValueStmt ");
-  indent(IndentationType::DiagBar);
-  auto retVal = traverseExpression(valueStmt.getExpr());
-  dedent();
-  return retVal;
-}
-
-bool PrintVisitor::traverseBinaryOperator(const BinaryOperator &binaryOperator) const {
-  emitln("BinaryOperator "
-         "("
-         + std::string(binaryOperator
-                           .getOpCodeString())
-         + ")");
-  indent(IndentationType::VertBar);
-  auto retVal = traverseExpression(binaryOperator.getRHS());
-  dedent();
-
-  if (retVal) {
-    indent(IndentationType::DiagBar);
-    retVal = traverseExpression(binaryOperator.getLHS());
+    if (stmt == --compoundStmt.end())
+      indent(IndentationType::DiagBar);
+    else
+      indent(IndentationType::VertBar);
+    this->visitStatement(*stmt->get());
     dedent();
   }
-  return retVal;
 }
 
-bool PrintVisitor::traverseReturn(const Return &returnStmt) const {
+void PrintVisitor::visitAssignment(const Assignment &assignment)  {
+  emitln("Assignment ");
+  indent(IndentationType::VertBar);
+  visitLValue(assignment.getLHS());
+  dedent();
+  indent(IndentationType::DiagBar);
+  visitExpression(assignment.getRHS());
+  dedent();
+}
+
+void PrintVisitor::visitStaticAssignment(const StaticAssignment &assignment)  {
+  emitln("StaticAssignment ");
+  indent(IndentationType::VertBar);
+  visitVarDecl(assignment.getDecl());
+  dedent();
+  indent(IndentationType::DiagBar);
+  visitExpression(assignment.getRHS());
+  dedent();
+}
+
+void PrintVisitor::visitValueStmt(const ValueStmt &valueStmt)  {
+  emitln("ValueStmt ");
+  indent(IndentationType::DiagBar);
+  visitExpression(valueStmt.getExpr());
+  dedent();
+}
+
+void PrintVisitor::visitBinaryOperator(
+    const BinaryOperator &binaryOperator)  {
+  static std::map<BinaryOperator::Operator, std::string> OpCodeStringLookUp{
+      {BinaryOperator::Operator::Plus, "+"},
+      {BinaryOperator::Operator::Minus, "-"},
+      {BinaryOperator::Operator::Divide, "/"},
+      {BinaryOperator::Operator::Times, "*"},
+      {BinaryOperator::Operator::Equals, "=="},
+      {BinaryOperator::Operator::Greater, ">"},
+      {BinaryOperator::Operator::GreaterEqual, ">="},
+      {BinaryOperator::Operator::Less, "<"},
+      {BinaryOperator::Operator::LessEqual, "<="}};
+
+
+  emitln("BinaryOperator (" + OpCodeStringLookUp[binaryOperator.getOpCode()] + ")");
+  indent(IndentationType::VertBar);
+  visitExpression(binaryOperator.getRHS());
+  dedent();
+  indent(IndentationType::DiagBar);
+  visitExpression(binaryOperator.getLHS());
+  dedent();
+}
+
+void PrintVisitor::visitReturn(const Return &returnStmt)  {
   emitln("Return ");
   if (returnStmt.getRetVal()) {
     indent(IndentationType::DiagBar);
     auto status = false;
-    if (traverseExpression(*(returnStmt.getRetVal())))
-      status = true;
+    visitExpression(*(returnStmt.getRetVal()));
     dedent();
-    return status;
   }
-  return true;
 }
 
-bool PrintVisitor::traverseIf(const If &ifStmt) const {
+void PrintVisitor::visitIf(const If &ifStmt)  {
   emitln("If ");
   indent(IndentationType::VertBar);
   emitln("Cond ");
   indent(IndentationType::DiagBar);
-  if (traverseExpression(ifStmt.getCond())) {
-    dedent();
-    if (ifStmt.getElseBlock() != nullptr) {
-      dedent();
-      indent(IndentationType::VertBar);
-    } else {
-      dedent();
-      indent(IndentationType::DiagBar);
-    }
-    emitln("Then ");
-    indent(IndentationType::DiagBar);
-
-    if (traverseCompoundStmt(ifStmt.getIfBlock())) {
-      dedent();
-      if (ifStmt.getElseBlock() != nullptr) {
-        dedent();
-        indent(IndentationType::DiagBar);
-        emitln("Else ");
-        indent(IndentationType::DiagBar);
-        auto status = false;
-        if (traverseCompoundStmt(*ifStmt.getElseBlock()))
-          status = true;
-        dedent();
-        dedent();
-        return status;
-      }
-      dedent();
-      return true;
-    }
-  }
+  visitExpression(ifStmt.getCond());
   dedent();
-  return false;
+
+  if (ifStmt.getElseBlock() != nullptr) {
+    dedent();
+    indent(IndentationType::VertBar);
+  } else {
+    dedent();
+    indent(IndentationType::DiagBar);
+  }
+
+  emitln("Then ");
+  indent(IndentationType::DiagBar);
+  visitCompoundStmt(ifStmt.getIfBlock());
+  dedent();
+
+  if (ifStmt.getElseBlock() != nullptr) {
+    dedent();
+    indent(IndentationType::DiagBar);
+    emitln("Else ");
+    indent(IndentationType::DiagBar);
+    visitCompoundStmt(*ifStmt.getElseBlock());
+    dedent();
+  }
+
+  dedent();
 }
 
-bool PrintVisitor::traverseWhile(const While &whileStmt) const {
+void PrintVisitor::visitWhile(const While &whileStmt)  {
   emitln("While ");
   indent(IndentationType::VertBar);
   emitln("Cond ");
   indent(IndentationType::DiagBar);
-  if (traverseExpression(whileStmt.getCond())) {
-    dedent();
-    dedent();
-    indent(IndentationType::DiagBar);
-    emitln("Block ");
-    indent(IndentationType::DiagBar);
-    if (traverseCompoundStmt(whileStmt.getBlock())) {
-      dedent();
-      dedent();
-      return true;
-    }
-  }
+
+  visitExpression(whileStmt.getCond());
   dedent();
-  return false;
+  dedent();
+
+  indent(IndentationType::DiagBar);
+  emitln("Block ");
+  indent(IndentationType::DiagBar);
+  visitCompoundStmt(whileStmt.getBlock());
+  dedent();
+
+  dedent();
+  dedent();
 }
 
-bool PrintVisitor::traverseCall(const Call &call) const {
+void PrintVisitor::visitCall(const Call &call)  {
   /// TODO
   emitln("Call ");
-  return true;
 }
 
-}// namespace quack::ast
+void PrintVisitor::visitUnaryOperator(const UnaryOperator &unOp)  {
+  switch (unOp.getOpCode()) {
+  case UnaryOperator::Operator::Neg:
+    emitln("UnaryOperator (-)");
+    break;
+  case UnaryOperator::Operator::Not:
+    emitln("UnaryOperator (!)");
+    break;
+  }
+}
+
+void PrintVisitor::visitMemberAccess(
+    const MemberAccess &memberAccess)  {}
+//
+// DEFAULT_DISPATCH(PrintVisitor, LValue)
+// DEFAULT_DISPATCH(PrintVisitor, Statement)
+// DEFAULT_DISPATCH(PrintVisitor, Expression)
+// DEFAULT_DISPATCH(PrintVisitor, Arguments)
+// DEFAULT_DISPATCH(PrintVisitor, Parameters)
+// DEFAULT_DISPATCH(PrintVisitor, Class)
+// DEFAULT_DISPATCH(PrintVisitor, Classes)
+// DEFAULT_DISPATCH(PrintVisitor, Method)
+// DEFAULT_DISPATCH(PrintVisitor, Methods)
+// DEFAULT_DISPATCH(PrintVisitor, MemberAccess)
+
+} // namespace quack::ast

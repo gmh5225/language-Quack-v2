@@ -21,6 +21,10 @@
   }
 
   using namespace quack::ast;
+
+  // Some aliasing to improve code readability
+
+  template <typename T> using ptr = std::unique_ptr<T>;
 }
 
 // The parsing context.
@@ -33,7 +37,9 @@
 
 %code {
   #include "ParserDriver.hpp"
-  #define LOC(BEGIN_TOK, END_TOK) \
+
+  // Creates a location object
+  #define loc(BEGIN_TOK, END_TOK) \
     Location(BEGIN_TOK.begin.line, BEGIN_TOK.begin.column, END_TOK.end.line, END_TOK.end.column, BEGIN_TOK.begin.filename)
 }
 
@@ -44,11 +50,13 @@
   PLUS    "+"
   STAR    "*"
   SLASH   "/"
+  MOD     "%"
   LESS   "<"
   MORE   ">"
   LESSEQ   "<="
   MOREEQ   ">="
   EQUAL    "=="
+  NEG     "!"
   COLON   ":"
   DOT     "."
   SEMICOLON ";"
@@ -76,37 +84,41 @@
 %token <std::string> ELSE
 %token <std::string> WHILE
 
-%type <std::unique_ptr<TranslationUnit>> translationUnit
-%type <std::unique_ptr<Statement>> statement
-%type <std::unique_ptr<Identifier>> identifier
-%type <std::unique_ptr<CompoundStmt>> compoundStmt
-%type <std::unique_ptr<Expression>> expression
-%type <std::unique_ptr<VarDecl>> varDecl
-%type <std::unique_ptr<Assignment>> assignment
-%type <std::unique_ptr<Return>> returnStmt
-%type <std::unique_ptr<If>> ifStmt
-%type <std::unique_ptr<While>> whileStmt
-%type <std::unique_ptr<CompoundStmt>> optElseIf
+%type <ptr<TranslationUnit>> translationUnit
+%type <ptr<Statement>> statement
+%type <ptr<Identifier>> identifier
+%type <ptr<CompoundStmt>> compoundStmt
+%type <ptr<Expression>> expression
+%type <ptr<VarDecl>> varDecl
+%type <ptr<StaticMemberDecl>> memberDecl
+%type <ptr<Assignment>> assignment
+%type <ptr<StaticAssignment>> staticAssignment
+%type <ptr<Return>> returnStmt
+%type <ptr<If>> ifStmt
+%type <ptr<While>> whileStmt
+%type <ptr<CompoundStmt>> optElseIf
 %type <BinaryOperator::Operator> binaryOperator
-%type <std::unique_ptr<Arguments>> args
-%type <std::unique_ptr<Arguments>> argsNonEmpty
-%type <std::unique_ptr<Parameters>> params
-%type <std::unique_ptr<Parameters>> paramsNonEmpty
-%type <std::unique_ptr<Method>> method
-%type <std::unique_ptr<Methods>> methods
-%type <std::unique_ptr<Methods>> methodsNonEmpty
-%type <std::unique_ptr<Class>> class
-%type <std::unique_ptr<Classes>> classes
-%type <std::unique_ptr<Classes>> classesNonEmpty
-%type <std::unique_ptr<Call>> call
-%type <std::unique_ptr<MemberAccess>> memberAccess
+%type <UnaryOperator::Operator> unaryOperator
+%type <ptr<Arguments>> args
+%type <ptr<Arguments>> argsNonEmpty
+%type <ptr<Parameters>> params
+%type <ptr<Parameters>> paramsNonEmpty
+%type <ptr<Method>> method
+%type <ptr<Methods>> methods
+%type <ptr<Methods>> methodsNonEmpty
+%type <ptr<Class>> class
+%type <ptr<Classes>> classes
+%type <ptr<Classes>> classesNonEmpty
+%type <ptr<Call>> call
+%type <ptr<MemberAccess>> memberAccess
 
 // Precedence
 %left "="
 %left "."
 %left "<" ">" "<=" ">=" "=="
 %left "+" "-"
-%left "*" "/"
+%left "*" "/" "%"
+%left UMINUS
 
 %%
 
@@ -115,78 +127,78 @@
 /// Root of the AST
 translationUnit : classes compoundStmt
 {
-  $$ = std::make_unique<TranslationUnit>(LOC(@1, @1), std::move($1), std::move($2));
+  $$ = std::make_unique<TranslationUnit>(loc(@1, @1), std::move($1), std::move($2));
   drv.setRoot(std::move($$));
 }
 ;
 
-compoundStmt: %empty                  { $$ = std::make_unique<CompoundStmt>(LOC(@$, @$)); }
+compoundStmt: %empty                  { $$ = std::make_unique<CompoundStmt>(loc(@$, @$)); }
     | compoundStmt statement          { $$ = std::move($1);
-                                        $$->append(std::move($2));
+                                        if ($2) // can be null (empty stmt ";")
+                                            $$->push_back(std::move($2));
                                       }
     ;
 
-identifier: IDENT                   { $$ = std::make_unique<Identifier>(LOC(@1, @1), $1); }
+identifier: IDENT                   { $$ = std::make_unique<Identifier>(loc(@1, @1), $1); }
     ;
 
 memberAccess: expression "." identifier
-                                    { $$ = std::make_unique<MemberAccess>(LOC(@1, @3), std::move($3), std::move($1)); }
+                                    { $$ = std::make_unique<MemberAccess>(loc(@1, @3), std::move($3), std::move($1)); }
     ;
 
-varDecl: WEAK identifier ":" identifier
-                                    { $$ = std::make_unique<VarDecl>(LOC(@1, @4), std::move($2), std::move($4), true); }
-    | identifier ":" identifier
-                                    { $$ = std::make_unique<VarDecl>(LOC(@1, @3), std::move($1), std::move($3)); }
-    | memberAccess ":" identifier   { $$ = std::make_unique<StaticMemberDecl>(
-                                          LOC(@1, @3), std::move($1), std::move($3)); }
+varDecl: identifier ":" identifier
+                                    { $$ = std::make_unique<VarDecl>(loc(@1, @3), std::move($1), std::move($3)); }
     ;
 
-assignment: varDecl "=" expression  { $$ = std::make_unique<Assignment>(LOC(@1, @3),std::move($1), std::move($3)); }
-    | memberAccess "=" expression   { $$ = std::make_unique<Assignment>(LOC(@1, @3),std::move($1), std::move($3)); }
-    | WEAK identifier "=" expression  { auto lValueIdent = std::make_unique<LValueIdent>(
-                                            LOC(@2, @2), std::move($2), true);
-                                       $$ = std::make_unique<Assignment>(
-                                            LOC(@1, @4),std::move(lValueIdent), std::move($4));
-                                      }
-    | identifier "=" expression  { auto lValueIdent = std::make_unique<LValueIdent>(LOC(@1, @1), std::move($1));
-                                   $$ = std::make_unique<Assignment>(LOC(@1, @3),std::move(lValueIdent), std::move($3)); }
+memberDecl: memberAccess ":" identifier
+                                    { $$ = std::make_unique<StaticMemberDecl>(loc(@1, @3), std::move($1), std::move($3)); }
     ;
 
-returnStmt: RETURN expression  { $$ = std::make_unique<Return>(LOC(@1, @2), std::move($2)); }
-    | RETURN                    { $$ = std::make_unique<Return>(LOC(@1, @1), nullptr); }
+staticAssignment: varDecl "=" expression  { $$ = std::make_unique<StaticAssignment>(loc(@1, @3), std::move($1), std::move($3)); }
+    | memberDecl "=" expression           { $$ = std::make_unique<StaticAssignment>(loc(@1, @3), std::move($1), std::move($3)); }
+    ;
+
+assignment: memberAccess "=" expression   { $$ = std::make_unique<Assignment>(loc(@1, @3),std::move($1), std::move($3)); }
+    | identifier "=" expression  { auto lValueIdent = std::make_unique<LValueIdent>(loc(@1, @1), std::move($1));
+                                   $$ = std::make_unique<Assignment>(loc(@1, @3),std::move(lValueIdent), std::move($3)); }
+    ;
+
+returnStmt: RETURN expression  { $$ = std::make_unique<Return>(loc(@1, @2), std::move($2)); }
+    | RETURN                    { $$ = std::make_unique<Return>(loc(@1, @1), nullptr); }
     ;
 
 ifStmt: IF expression "{" compoundStmt "}" optElseIf
-    { $$ = std::make_unique<If>(LOC(@1, @6), std::move($2), std::move($4), std::move($6)); }
+    { $$ = std::make_unique<If>(loc(@1, @6), std::move($2), std::move($4), std::move($6)); }
     ;
 
 optElseIf: ELIF expression "{" compoundStmt "}" optElseIf
     {
-      $$ = std::make_unique<CompoundStmt>(LOC(@1, @6));
-      auto IfStmt = std::make_unique<If>(LOC(@1, @6), std::move($2), std::move($4), std::move($6));
-      $$->append(std::move(IfStmt));
+      $$ = std::make_unique<CompoundStmt>(loc(@1, @6));
+      auto IfStmt = std::make_unique<If>(loc(@1, @6), std::move($2), std::move($4), std::move($6));
+      $$->push_back(std::move(IfStmt));
     }
     | ELSE "{" compoundStmt "}"     { $$ = std::move($3); }
-    | %empty                     { $$ = nullptr; }
+    | %empty                        { $$ = nullptr; }
     ;
 
 whileStmt: WHILE expression "{" compoundStmt "}"
-    { $$ = std::make_unique<While>(LOC(@1, @5), std::move($2), std::move($4)); }
+    { $$ = std::make_unique<While>(loc(@1, @5), std::move($2), std::move($4)); }
     ;
 
 statement: ";"                      { ; }
-    | expression ";"                { $$ = std::make_unique<ValueStmt>(LOC(@1, @2), std::move($1)); }
+    | expression ";"                { $$ = std::make_unique<ValueStmt>(loc(@1, @2), std::move($1)); }
     | assignment ";"                { $$ = std::move($1); }
+    | staticAssignment ";"          { $$ = std::move($1); }
     | returnStmt ";"                { $$ = std::move($1); }
     | ifStmt                        { $$ = std::move($1); }
     | whileStmt                     { $$ = std::move($1); }
     ;
 
-
 binaryOperator: "+"                 { $$ = BinaryOperator::Operator::Plus; }
     | "-"                           { $$ = BinaryOperator::Operator::Minus; }
     | "*"                           { $$ = BinaryOperator::Operator::Times; }
     | "/"                           { $$ = BinaryOperator::Operator::Divide; }
+    | "%"                           { $$ = BinaryOperator::Operator::Modulo; }
     | "<"                           { $$ = BinaryOperator::Operator::Less; }
     | ">"                           { $$ = BinaryOperator::Operator::Greater; }
     | "<="                          { $$ = BinaryOperator::Operator::LessEqual; }
@@ -194,92 +206,95 @@ binaryOperator: "+"                 { $$ = BinaryOperator::Operator::Plus; }
     | "=="                          { $$ = BinaryOperator::Operator::Equals; }
     ;
 
-call: expression "." identifier "(" args ")" { $$ = std::make_unique<Call>(LOC(@1, @6), std::move($1), std::move($3),
+unaryOperator: "!"                  { $$ = UnaryOperator::Operator::Not; }
+    | "-"                           { $$ = UnaryOperator::Operator::Neg; }
+    ;
+
+call: expression "." identifier "(" args ")" { $$ = std::make_unique<Call>(loc(@1, @6), std::move($1), std::move($3),
                                                           std::move($5)); }
-    | identifier "(" args ")"                { $$ = std::make_unique<Call>(LOC(@1, @4), nullptr, std::move($1),
-                                                          std::move($3)); }
     ;
 
 args: argsNonEmpty                         { $$ = std::move($1); }
-    | %empty                               { $$ = std::make_unique<Arguments>(LOC(@$, @$)); }
+    | %empty                               { $$ = std::make_unique<Arguments>(loc(@$, @$)); }
     ;
 
-argsNonEmpty : expression                  { $$ = std::make_unique<Arguments>(LOC(@1, @1));
-                                             $$->append(std::move($1)); }
-    | argsNonEmpty "," expression          { $1->append(std::move($3)); $$ = std::move($1); }
+argsNonEmpty : expression                  { $$ = std::make_unique<Arguments>(loc(@1, @1));
+                                             $$->push_back(std::move($1)); }
+    | argsNonEmpty "," expression          { $1->push_back(std::move($3)); $$ = std::move($1); }
     ;
 
 params: paramsNonEmpty                     { $$ = std::move($1); }
-    | %empty                               { $$ = std::make_unique<Parameters>(LOC(@$, @$)); }
+    | %empty                               { $$ = std::make_unique<Parameters>(loc(@$, @$)); }
     ;
 
-paramsNonEmpty : varDecl                   { $$ = std::make_unique<Parameters>(LOC(@1, @1));
-                                             $$->append(std::move($1)); }
-    | paramsNonEmpty "," varDecl           { $1->append(std::move($3)); $$ = std::move($1); }
+paramsNonEmpty : varDecl                   { $$ = std::make_unique<Parameters>(loc(@1, @1));
+                                             $$->push_back(std::move($1)); }
+    | paramsNonEmpty "," varDecl           { $1->push_back(std::move($3)); $$ = std::move($1); }
     ;
 
 method: DEF identifier "(" params ")" ":" identifier "{" compoundStmt "}"
                                            { $$ = std::make_unique<Method>(
-                                                LOC(@1, @10), std::move($4), std::move($2), std::move($7),
+                                                loc(@1, @10), std::move($4), std::move($2), std::move($7),
                                                 std::move($9));
                                            }
     | DEF identifier "(" params ")" "{" compoundStmt "}"
                                            { $$ = std::make_unique<Method>(
-                                                LOC(@1, @8), std::move($4), std::move($2),
-                                                std::make_unique<Identifier>(LOC(@1, @1), "Nothing"),
+                                                loc(@1, @8), std::move($4), std::move($2),
+                                                std::make_unique<Identifier>(loc(@1, @1), "Nothing"),
                                                 std::move($7));
                                            }
     ;
 
 methods: methodsNonEmpty                   { $$ = std::move($1); }
-    | %empty                               { $$ = std::make_unique<Methods>(LOC(@$, @$)); }
+    | %empty                               { $$ = std::make_unique<Methods>(loc(@$, @$)); }
     ;
 
-methodsNonEmpty : method                   { $$ = std::make_unique<Methods>(LOC(@1, @1));
-                                             $$->append(std::move($1)); }
-    | methodsNonEmpty "," method           { $1->append(std::move($3)); $$ = std::move($1); }
+methodsNonEmpty : method                   { $$ = std::make_unique<Methods>(loc(@1, @1));
+                                             $$->push_back(std::move($1)); }
+    | methodsNonEmpty "," method           { $1->push_back(std::move($3)); $$ = std::move($1); }
     ;
 
 class : CLASS identifier "(" params ")" "{" compoundStmt methods "}"
                                            {
-                                             $$ = std::make_unique<Class>(LOC(@1, @9), std::move($8),
-                                                  std::make_unique<Identifier>(LOC(@2, @2), $2->getName()),
-                                                  std::make_unique<Method>(LOC(@1, @9), std::move($4),
-                                                  std::make_unique<Identifier>(LOC(@2, @2), $2->getName()),
+                                             $$ = std::make_unique<Class>(loc(@1, @9), std::move($8),
+                                                  std::make_unique<Identifier>(loc(@2, @2), $2->getName()),
+                                                  std::make_unique<Method>(loc(@1, @9), std::move($4),
+                                                  std::make_unique<Identifier>(loc(@2, @2), $2->getName()),
                                                   std::move($2), std::move($7)));
                                            }
     | CLASS identifier "(" params ")" EXTENDS identifier "{" compoundStmt methods "}"
                                            {
-                                            $$ = std::make_unique<Class>(LOC(@1, @11), std::move($10),
-                                                std::make_unique<Identifier>(LOC(@2, @2), $2->getName()),
-                                            std::make_unique<Method>(LOC(@1, @11), std::move($4),
-                                            std::make_unique<Identifier>(LOC(@2, @2), $2->getName()),
-                                            std::move($2), std::move($9)), std::move($7)
+                                            $$ = std::make_unique<Class>(loc(@1, @11), std::move($10),
+                                                std::make_unique<Identifier>(loc(@2, @2), $2->getName()),
+                                                std::make_unique<Method>(loc(@1, @11), std::move($4),
+                                                std::make_unique<Identifier>(loc(@2, @2), $2->getName()),
+                                                std::move($2), std::move($9)), std::move($7)
                                               );
                                            }
 
 
 classes: classesNonEmpty                   { $$ = std::move($1); }
-    | %empty                               { $$ = std::make_unique<Classes>(LOC(@$, @$)); }
+    | %empty                               { $$ = std::make_unique<Classes>(loc(@$, @$)); }
     ;
 
-classesNonEmpty : class                   { $$ = std::make_unique<Classes>(LOC(@1, @1));
-                                            $$->append(std::move($1)); }
-    | classesNonEmpty "," class           { $1->append(std::move($3)); $$ = std::move($1); }
+classesNonEmpty : class                   { $$ = std::make_unique<Classes>(loc(@1, @1));
+                                            $$->push_back(std::move($1)); }
+    | classesNonEmpty "," class           { $1->push_back(std::move($3)); $$ = std::move($1); }
     ;
 
 expression:
-      INT                                  { $$ = std::make_unique<IntegerLiteral>(LOC(@1, @1), $1); }
-    | FLOAT                                { $$ = std::make_unique<FloatLiteral>(LOC(@1, @1), $1); }
-    | BOOL                                 { $$ = std::make_unique<BoolLiteral>(LOC(@1, @1), $1); }
-    | STRING_LIT                           { $$ = std::make_unique<StringLiteral>(LOC(@1, @1), $1); }
-    | THIS                                 { $$ = std::make_unique<Identifier>(LOC(@1, @1), "this"); }
-    | identifier                           { $$ = std::make_unique<LValueIdent>(LOC(@1, @1), std::move($1)); }
+      INT                                  { $$ = std::make_unique<IntegerLiteral>(loc(@1, @1), $1); }
+    | FLOAT                                { $$ = std::make_unique<FloatLiteral>(loc(@1, @1), $1); }
+    | BOOL                                 { $$ = std::make_unique<BoolLiteral>(loc(@1, @1), $1); }
+    | STRING_LIT                           { $$ = std::make_unique<StringLiteral>(loc(@1, @1), $1); }
+    | THIS                                 { $$ = std::make_unique<LValueIdent>(loc(@1, @1), std::make_unique<Identifier>(loc(@1, @1), "this")); }
+    | identifier                           { $$ = std::make_unique<LValueIdent>(loc(@1, @1), std::move($1)); }
     | "(" expression ")"                   { $$ = std::move($2); }
     | call                                 { $$ = std::move($1); }
-    | expression binaryOperator expression { $$ = std::make_unique<BinaryOperator>(LOC(@1, @3), $2, std::move($1),
-                                                      std::move($3)); }
     | memberAccess                         { $$ = std::move($1); }
+    | unaryOperator expression %prec UMINUS { $$ = std::make_unique<UnaryOperator>(loc(@1, @2), $1, std::move($2)); }
+    | expression binaryOperator expression { $$ = std::make_unique<BinaryOperator>(loc(@1, @3), $2, std::move($1),
+                                                          std::move($3)); }
     ;
 %%
 

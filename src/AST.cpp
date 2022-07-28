@@ -6,15 +6,23 @@
 
 namespace quack::ast {
 
-const std::map<BinaryOperator::Operator, const char *> BinaryOperator::OpCodeStringLookUp{
-    {BinaryOperator::Operator::Plus, "+"},
-    {BinaryOperator::Operator::Minus, "-"},
-    {BinaryOperator::Operator::Divide, "/"},
-    {BinaryOperator::Operator::Times, "*"},
-    {BinaryOperator::Operator::Equals, "=="},
-    {BinaryOperator::Operator::Greater, ">"},
-    {BinaryOperator::Operator::GreaterEqual, ">="},
-    {BinaryOperator::Operator::Less, "<"},
-    {BinaryOperator::Operator::LessEqual, "<="}};
+bool CompoundStmt::hasReturn() const {
+  for (auto &stmt : *this) {
+    // Checking if Compound statement has a return
+    if (stmt->getKind() == Statement::Kind::Return)
+      return true;
 
+    // Checking if all paths of an If statement return
+    if (stmt->getKind() == Statement::Kind::If) {
+      auto *ifStmt = static_cast<If *>(stmt.get());
+      if (!ifStmt->getElseBlock())
+        continue;
+      if (ifStmt->getIfBlock().hasReturn() &&
+          ifStmt->getElseBlock()->hasReturn())
+        return true;
+    }
+  }
+  return false;
 }
+
+} // namespace quack::ast
