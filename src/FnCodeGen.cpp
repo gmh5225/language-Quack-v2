@@ -16,8 +16,8 @@ static llvm::Value *getNoOp(llvm::Module *module, llvm::LLVMContext &cntx) {
   return noop;
 }
 
-static llvm::Value *visitIntOrFloat(IRBuilder<> &builder, llvm::Type *type,
-                                    Value *literal) {
+static inline llvm::Value *visitIntOrFloat(IRBuilder<> &builder,
+                                           llvm::Type *type, Value *literal) {
   auto alloca = builder.CreateAlloca(type);
   alloca->setAlignment(MaybeAlign(8));
   auto store = builder.CreateStore(literal, alloca);
@@ -147,24 +147,9 @@ ExprCodeGen::visitBinaryOperator(const ast::BinaryOperator &binOp) {
 /// First builds the environment and creates allocations for variables declared
 /// in this environment, then visits every statement
 bool FnCodeGen::visitCompoundStmt(const CompoundStmt &compoundStmt) {
-  // Building the environment
-  auto &scope = addNewScope();
-  if (!EnvironmentBuilder::visitCompoundStmt(compoundStmt))
-    return false;
-
-  // Declaring the variables in a new scope
-  llvmEnv.emplace_back();
-  auto &llvmScope = llvmEnv.back();
-  for (auto &[var, qtype] : scope) {
-    auto *llvmType = tr.get(qtype);
-    assert(llvmType);
-    llvmScope.insert({var, llvmType->alloc(builder)});
-  }
   for (auto &stmt : compoundStmt)
     if (!visitStatement(*stmt))
       return false;
-  llvmEnv.pop_back();
-  (void)popCurrentScope();
   return true;
 }
 
@@ -207,10 +192,8 @@ bool FnCodeGen::visitIf(const If &ifStmt) {
   llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(cntx, "if.then", fn);
   llvm::BasicBlock *mergeBB = llvm::BasicBlock::Create(cntx, "if.cont");
   llvm::BasicBlock *elseBB = mergeBB;
-  if (ifStmt.hasElse()) {
+  if (ifStmt.hasElse())
     elseBB = llvm::BasicBlock::Create(cntx, "if.else");
-    fn->getBasicBlockList().push_back(elseBB);
-  }
 
   // Emitting IR for if condition
   auto condExpr = exprCG.visitExpression(ifStmt.getCond());
@@ -220,26 +203,63 @@ bool FnCodeGen::visitIf(const If &ifStmt) {
     cmp = builder.CreateICmpEQ(condExpr, builder.getInt64(1));
   builder.CreateCondBr(cmp, thenBB, elseBB);
 
-  auto emitBody = [&](const CompoundStmt &body) {
+  /// Emits code for compound stmt, and returns the environment of the generated
+  /// block
+  auto emitBody = [&](const CompoundStmt &body) -> llvm::Optional<LLVMScope> {
+    (void)llvmEnv.addNewScope();
     if (!visitCompoundStmt(body))
-      return false;
+      return llvm::None;
     if (!body.hasReturn())
       builder.CreateBr(mergeBB);
     else // Erase potentially empty block
       removeEmptyBB(builder);
-    return true;
+    return llvmEnv.popCurrentScope();
   };
 
   // Emitting IR for if.then body
   builder.SetInsertPoint(thenBB);
-  if (!emitBody(ifStmt.getIfBlock()))
+  auto optThenEnv = emitBody(ifStmt.getIfBlock());
+  if (!optThenEnv)
     return false;
+  auto &lastThenBB = fn->getBasicBlockList().back();
+  auto &ThenEnv = optThenEnv.getValue();
 
   // Emitting IR for if.else body
   builder.SetInsertPoint(elseBB);
   if (auto elseBlock = ifStmt.getElseBlock()) {
-    if (!emitBody(*elseBlock))
+    fn->getBasicBlockList().push_back(elseBB);
+
+    auto optElseEnv = emitBody(*elseBlock);
+    if (!optElseEnv)
       return false;
+
+    auto &ElseEnv = optElseEnv.getValue();
+    auto &lastElseBB = fn->getBasicBlockList().back();
+
+    fn->getBasicBlockList().push_back(mergeBB);
+    builder.SetInsertPoint(mergeBB);
+
+    /// Merges the variables defined in both paths with a phi node
+    auto mergePaths = [&](){
+      for (auto &pair : ThenEnv) {
+        auto &var = pair.getFirst();
+        if (!ElseEnv.lookup(var))
+          continue;
+
+        auto &f = pair.getSecond();
+        auto &s = ElseEnv[var];
+        if (f->getType() != s->getType())
+          continue;
+
+        auto phi = builder.CreatePHI(f->getType(), 2);
+        phi->addIncoming(ElseEnv.lookup(var), &lastElseBB);
+        phi->addIncoming(ThenEnv.lookup(var), &lastThenBB);
+        llvmEnv.back().insert({var, phi});
+      }
+    };
+
+    mergePaths();
+    return true;
   }
 
   fn->getBasicBlockList().push_back(mergeBB);
@@ -281,8 +301,11 @@ bool FnCodeGen::visitWhile(const While &whileStmt) {
 
   // Emitting code for the body of the while loop
   builder.SetInsertPoint(loopBB);
+  // Declaring the variables in a new scope
+  (void)llvmEnv.addNewScope();
   if (!visitCompoundStmt(whileStmt.getBlock()))
     return false;
+  llvmEnv.popCurrentScope();
 
   // Creating a branch instruction for loop bodies without terminator
   if (!whileStmt.getBlock().hasReturn())
@@ -308,9 +331,15 @@ bool FnCodeGen::visitAssignment(const Assignment &assignment) {
   if (assignment.getLHS().getKind() == LValue::Kind::LValueIdent) {
     auto *llvmType = tr.get(qtype);
     auto &lvalue = static_cast<const LValueIdent &>(assignment.getLHS());
-    Value *storage = llvmEnv.lookup(lvalue.getVar().getName());
-    assert(storage && "must have been declared in the environment");
-    llvmType->instantiate(builder, storage, {rhsLLVMVal});
+    auto &var = lvalue.getVar().getName();
+    if (auto *storage = llvmEnv.lookup(var)) {
+      llvmType->instantiate(builder, storage, {rhsLLVMVal});
+    } else {
+      storage = llvmType->alloc(builder);
+      assert(storage);
+      llvmEnv.back().insert({var, storage});
+      llvmType->instantiate(builder, storage, {rhsLLVMVal});
+    }
     return true;
   } else {
     // TODO member access
@@ -328,17 +357,20 @@ bool FnCodeGen::visitStaticAssignment(const StaticAssignment &assignment) {
   auto *qtype = tdb.getType(type);
   assert(qtype && "qtype must exist at this point");
 
-  if (assignment.getDecl().isMemberDecl()) {
-    // TODO
-  } else {
+  if (!assignment.getDecl().isMemberDecl()) {
     auto *llvmType = tr.get(qtype);
     assert(llvmType && "qtype must exist in tr");
-    Value *storage = llvmEnv.lookup(var);
+    assert(llvmEnv.back().count(var) == 0 && "must have been type checked");
+    auto storage = llvmType->alloc(builder);
+    assert(storage);
+    llvmEnv.back().insert({var, storage});
     assert(storage && "must have been declared in the environment");
     llvmType->instantiate(builder, storage, {rhsLLVMVal});
+    return true;
+  } else {
+    // TODO
+    return false;
   }
-
-  return true;
 }
 
 // bool FnCodeGen::visitCall(const Call &call) { return false; }
@@ -354,7 +386,7 @@ bool FnCodeGen::visitReturn(const ast::Return &returnStmt) {
   } else {
     if (isMain()) {
       lval =
-          visitIntOrFloat(builder, builder.getInt32Ty(), builder.getInt32(0));
+          visitIntOrFloat(builder, builder.getInt64Ty(), builder.getInt64(0));
     } else {
       // Nothing type TODO
       lval = nullptr;
@@ -374,7 +406,7 @@ bool FnCodeGen::generate() {
     return false;
   }
 
-  // Creating the main function
+  // Creating the function
   auto &cntx = builder.getContext();
   auto fnType = llvm::FunctionType::get(builder.getInt64Ty(), {});
   auto fn = llvm::Function::Create(fnType, llvm::GlobalValue::ExternalLinkage,
@@ -382,10 +414,12 @@ bool FnCodeGen::generate() {
   fn->setDSOLocal(true);
   auto *bb = llvm::BasicBlock::Create(cntx, fnName, fn);
 
-  // Emitting IR for body of main
+  // Emitting IR for body of function
   builder.SetInsertPoint(bb);
+  (void)llvmEnv.addNewScope();
   if (!visitCompoundStmt(fnBody))
     return false;
+  auto llvmScope = llvmEnv.popCurrentScope();
 
   // Must create a return stmt if there is none
   if (!fnBody.hasReturn())

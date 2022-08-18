@@ -6,8 +6,8 @@
 #define QUACK_EXPRTYPECHECKER_HPP
 
 #include "ASTVisitor.hpp"
+#include "NestedEnvironment.hpp"
 #include "QTypeDB.hpp"
-#include "Environment.hpp"
 
 namespace quack {
 

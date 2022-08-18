@@ -1,72 +1,166 @@
 #include "FnCodeGen.hpp"
 #include "ParserDriver.hpp"
 #include "PrintVisitor.hpp"
-#include "QType.hpp"
 #include "TypeChecker.hpp"
 #include "Utils.hpp"
+
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/Support/TargetSelect.h"
+
+#include "llvm/ExecutionEngine/JITSymbol.h"
+#include "llvm/ExecutionEngine/Orc/CompileUtils.h"
+#include "llvm/ExecutionEngine/Orc/Core.h"
+#include "llvm/ExecutionEngine/Orc/ExecutionUtils.h"
+#include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
+#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Mangler.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/DynamicLibrary.h"
+#include "llvm/Support/raw_ostream.h"
+
 #include <iostream>
 
-bool CodeGen(const CompoundStmt &cmpstmt) {
-  llvm::LLVMContext cntx;
-  llvm::Module module("module", cntx);
-  llvm::IRBuilder<> builder(cntx);
-  quack::codegen::LLVMTypeRegistery tr(cntx);
-  quack::codegen::FnCodeGen fnCodeGen(builder, module, cmpstmt,
-                                      quack::type::QTypeDB::get(), tr);
-  if (!fnCodeGen.generate())
-    return false;
+using namespace llvm;
+cl::opt<bool> DumpAST("dump-ast",
+                      cl::desc("prints the AST of the input program"),
+                      cl::init(false));
+cl::opt<bool> EmitLLVMIR("emit-llvm-ir",
+                         cl::desc("prints the generated llvm ir to stdout"),
+                         cl::init(false));
+cl::opt<std::string> Filename(cl::Positional, cl::desc("<input file>"),
+                              cl::init("-"));
+namespace llvm::orc {
 
-  module.print(llvm::errs(), nullptr);
-  return true;
-}
+class JITEngine {
+private:
+  ExecutionSession ES;
+  RTDyldObjectLinkingLayer ObjectLayer;
+  IRCompileLayer CompileLayer;
+
+  DataLayout DL;
+  MangleAndInterner Mangle;
+  ThreadSafeContext Ctx;
+
+  JITDylib &MainJD;
+
+public:
+  JITEngine(JITTargetMachineBuilder JTMB, DataLayout DL)
+      : ObjectLayer(ES,
+                    []() { return std::make_unique<SectionMemoryManager>(); }),
+        CompileLayer(ES, ObjectLayer,
+                     std::make_unique<ConcurrentIRCompiler>(std::move(JTMB))),
+        DL(std::move(DL)), Mangle(ES, this->DL),
+        Ctx(std::make_unique<LLVMContext>()),
+        MainJD(ES.createJITDylib("<main>")) {
+    MainJD.addGenerator(
+        cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(
+            DL.getGlobalPrefix())));
+  }
+
+  static Expected<std::unique_ptr<JITEngine>> Create() {
+    auto JTMB = JITTargetMachineBuilder::detectHost();
+
+    if (!JTMB)
+      return JTMB.takeError();
+
+    auto DL = JTMB->getDefaultDataLayoutForTarget();
+    if (!DL)
+      return DL.takeError();
+
+    return std::make_unique<JITEngine>(std::move(*JTMB), std::move(*DL));
+  }
+
+  const DataLayout &getDataLayout() const { return DL; }
+
+  LLVMContext &getContext() { return *Ctx.getContext(); }
+
+  Error addModule(std::unique_ptr<Module> M) {
+    return CompileLayer.add(MainJD, ThreadSafeModule(std::move(M), Ctx));
+  }
+
+  Expected<JITEvaluatedSymbol> lookup(StringRef Name) {
+    return ES.lookup({&MainJD}, Mangle(Name.str()));
+  }
+};
+
+} // namespace llvm::orc
+
+namespace quack::compiler {
+
+class CompilerDriver {
+  ExitOnError ExitOnErr;
+  std::unique_ptr<llvm::orc::JITEngine> engine;
+
+public:
+  CompilerDriver() : engine(ExitOnErr(orc::JITEngine::Create())) {}
+
+  static bool TypeCheck(const TranslationUnit &root) {
+    quack::sema::TypeChecker tc;
+    return tc.visitTranslationUnit(root);
+  }
+
+  static std::unique_ptr<Module> CodeGen(const TranslationUnit &root,
+                                         LLVMContext &cntx,
+                                         const std::string &name) {
+    if (!TypeCheck(root))
+      return nullptr;
+
+    auto module = std::make_unique<Module>(name, cntx);
+    IRBuilder<> builder(cntx);
+    quack::codegen::LLVMTypeRegistery tr(cntx);
+    quack::codegen::FnCodeGen fnCodeGen(builder, *module,
+                                        root.getCompoundStmt(), tr);
+    if (!fnCodeGen.generate())
+      return nullptr;
+
+    return module;
+  }
+
+  int JIT(std::unique_ptr<Module> module) {
+    std::string err;
+    module->setDataLayout(engine->getDataLayout());
+    ExitOnErr(engine->addModule(std::move(module)));
+    auto MainFn = ExitOnErr(engine->lookup("main"));
+    auto FnPtr = (intptr_t)MainFn.getAddress();
+    auto Fn = (int (*)())FnPtr;
+    return Fn();
+  }
+};
+
+} // namespace quack::compiler
 
 int main(int argc, char **argv) {
-  int programError = 0;
-  bool printAST = false;
+  cl::ParseCommandLineOptions(argc, argv, "Building A JIT - Client.\n");
+
   quack::parser::ParserDriver drv;
+  int programError = drv.parse(Filename);
+  if (programError)
+    std::exit(programError);
 
-  if (argc < 2) {
-    std::cerr << "usage: quack [options] <file.qk>\n";
+  const auto &root = drv.getRoot();
+
+  if (DumpAST) {
+    PrintVisitor printVisitor(root);
+    printVisitor.visitTranslationUnit(root);
+    std::exit(0);
+  }
+
+  LLVMContext cntx;
+  auto module = quack::compiler::CompilerDriver::CodeGen(root, cntx, Filename);
+  if (!module)
     std::exit(1);
+
+  if (EmitLLVMIR) {
+    module->print(llvm::outs(), nullptr);
+    std::exit(0);
   }
 
-  auto &db = quack::type::QTypeDB::get();
-
-  for (int i = 1; i < argc; ++i) {
-    if (argv[i] == std::string("-p"))
-      drv.setTraceParsing(true);
-    else if (argv[i] == std::string("-s"))
-      drv.setTraceScanning(true);
-    else
-      programError = drv.parse(argv[i]);
-  }
-
-  if (!programError) {
-    const auto &root = drv.getRoot();
-
-    if (printAST) {
-      PrintVisitor printVisitor(root);
-      //      printVisitor.traverseAST();
-      std::exit(0);
-    }
-
-    quack::sema::TypeChecker tc;
-    if (!tc.visitTranslationUnit(root))
-      std::exit(1);
-
-    if (!CodeGen(root.getCompoundStmt()))
-      std::exit(1);
-    //    quack::codegen::CodeGenerator codeGen(root, argv[argc - 1]);
-    //    if (!codeGen.generate()) {
-    //      quack::logError("compilation failed");
-    //      //            std::exit(1);
-    //    }
-    //
-    //    if (!codeGen.toBitCode()) {
-    //      quack::logError("failed to write bit-code");
-    //      std::exit(1);
-    //    }
-  }
-
-  std::exit(0);
+  InitializeNativeTarget();
+  InitializeNativeTargetAsmPrinter();
+  InitializeNativeTargetAsmParser();
+  quack::compiler::CompilerDriver Compiler;
+  int res = Compiler.JIT(std::move(module));
+  std::exit(res);
 }

@@ -9,11 +9,12 @@ namespace quack {
 namespace sema {
 
 bool TypeChecker::visitTranslationUnit(const ast::TranslationUnit &tu) {
+  Env environment;
   // Checking classes
 
   // Checking main
   auto &tdb = type::QTypeDB::get();
-  StmtTypeChecker stmtTypeChecker(tu.getCompoundStmt(), tdb, nullptr,
+  StmtTypeChecker stmtTypeChecker(tu.getCompoundStmt(), environment, nullptr,
                                   tdb.getIntegerType());
   if (!stmtTypeChecker.isLegal())
     return false;

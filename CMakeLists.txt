@@ -24,6 +24,17 @@ include_directories(${LLVM_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} include)
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
 llvm_map_components_to_libnames(llvm_libs support core irreader target native executionengine mcjit linker passes)
+set(LLVM_LINK_COMPONENTS
+        LLVMAnalysis
+        LLVMCore
+        LLVMExecutionEngine
+        LLVMInstCombine
+        LLVMObject
+        LLVMOrcJIT
+        LLVMRuntimeDyld
+        LLVMScalarOpts
+        LLVMSupport
+        )
 
 add_executable(
         quack
@@ -45,4 +56,4 @@ add_executable(
         src/TypeChecker.cpp
         src/Utils.cpp)
 
-target_link_libraries(quack ${llvm_libs})
+target_link_libraries(quack ${llvm_libs} ${LLVM_LINK_COMPONENTS})
