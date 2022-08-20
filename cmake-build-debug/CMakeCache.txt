@@ -217,6 +217,9 @@ FL_LIBRARY:FILEPATH=/usr/local/lib/libfl.so
 //The directory containing a CMake configuration file for LLVM.
 LLVM_DIR:PATH=/usr/lib/llvm-10/cmake
 
+//Path to a program.
+LLVM_LIT_BIN:FILEPATH=/home/parsab/.local/bin/lit
+
 //Value Computed by CMake
 Quick_BINARY_DIR:STATIC=/home/parsab/dev/Quack-v2/cmake-build-debug
 
@@ -318,6 +321,8 @@ CMAKE_HOME_DIRECTORY:INTERNAL=/home/parsab/dev/Quack-v2
 CMAKE_INSTALL_SO_NO_EXE:INTERNAL=1
 //ADVANCED property for variable: CMAKE_LINKER
 CMAKE_LINKER-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_MAKE_PROGRAM
+CMAKE_MAKE_PROGRAM-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS
 CMAKE_MODULE_LINKER_FLAGS-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_DEBUG

@@ -9,14 +9,16 @@ find_package(BISON 3.7.1 REQUIRED)
 find_package(FLEX 2.6.4 REQUIRED)
 find_package(LLVM CONFIG REQUIRED)
 
-message(STATUS "LLVM DIR: ${LLVM_DIR}")
-message(STATUS "LLVM INCLUDE DIR: ${LLVM_INCLUDE_DIRS}")
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
 include_directories(${LLVM_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}
         include
         ${CMAKE_CURRENT_BINARY_DIR}/src)
+add_definitions(${LLVM_DEFINITIONS})
+list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
+include(AddLLVM)
 
 add_subdirectory(src)
 add_subdirectory(test)

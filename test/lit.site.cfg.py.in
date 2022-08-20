@@ -3,6 +3,7 @@ import os
 
 config.quick_src_root = r'@CMAKE_SOURCE_DIR@'
 config.quick_obj_root = r'@CMAKE_BINARY_DIR@'
+config.llvm_bin_dir = r'@LLVM_TOOLS_BINARY_DIR@'
 
 import lit.llvm
 # lit_config is a global instance of LitConfig

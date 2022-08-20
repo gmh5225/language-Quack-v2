@@ -7,3 +7,5 @@ config.test_format = lit.formats.ShTest(True)
 config.test_exec_root = os.path.join(config.quick_obj_root, 'test')
 config.substitutions.append(('%quick',
                              os.path.join(config.quick_obj_root, 'quick')))
+config.substitutions.append(('%file-check',
+                             os.path.join(config.llvm_bin_dir, 'FileCheck')))

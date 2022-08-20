@@ -1,4 +1,4 @@
-// RUN: %quick %s
+// RUN: %quick %s | %file-check %s
 
 // CHECK: 0
 print 10 == 2;

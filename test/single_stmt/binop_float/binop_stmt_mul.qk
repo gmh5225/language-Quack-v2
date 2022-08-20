@@ -1,4 +1,4 @@
-// RUN: %quick %s
+// RUN: %quick %s | %file-check %s
 
 // CHECK: 7.5
 print 3.0 * 2.5;
