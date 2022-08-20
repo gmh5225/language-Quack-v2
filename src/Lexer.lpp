@@ -34,11 +34,12 @@ if          if
 else        else
 elif        elif
 while       while
+print       print
 id          [a-zA-Z][a-zA-Z_0-9]*
 int         [0-9]+
 float       ([0-9]+[.])?[0-9]+
 blank       [ \t\r]
-
+comment     \/\/[^\n]*
 
 %{
   // Code run each time a pattern is matched.
@@ -55,6 +56,7 @@ blank       [ \t\r]
 %}
 
 {blank}+   loc.step ();
+{comment}+ loc.lines(yyleng); loc.step();
 \n+        loc.lines (yyleng); loc.step ();
 
 
@@ -68,6 +70,7 @@ blank       [ \t\r]
 ">="       return yy::parser::make_MOREEQ  (loc);
 "<="       return yy::parser::make_LESSEQ  (loc);
 "=="       return yy::parser::make_EQUAL (loc);
+"!="        return yy::parser::make_NOT_EQUAL(loc);
 "("        return yy::parser::make_LPAREN (loc);
 ")"        return yy::parser::make_RPAREN (loc);
 "{"        return yy::parser::make_LBRACK (loc);
@@ -76,8 +79,8 @@ blank       [ \t\r]
 ":"        return yy::parser::make_COLON  (loc);
 "."        return yy::parser::make_DOT(loc);
 ";"        return yy::parser::make_SEMICOLON (loc);
+","        return yy::parser::make_COMMA (loc);
 "!"        return yy::parser::make_NEG(loc);
-
 {int}      return make_INT (yytext, loc);
 {float}    return make_FLOAT (yytext, loc);
 {this}     return yy::parser::make_THIS(yytext, loc);
@@ -92,12 +95,13 @@ blank       [ \t\r]
 {else}     return yy::parser::make_ELSE (yytext, loc);
 {elif}     return yy::parser::make_ELIF (yytext, loc);
 {while}    return yy::parser::make_WHILE (yytext, loc);
+{print}    return yy::parser::make_PRINT (yytext, loc);
 {id}       return yy::parser::make_IDENT (yytext, loc);
 {string_lit} return yy::parser::make_STRING_LIT (yytext, loc);
 .          {
              throw yy::parser::syntax_error
                (loc, "invalid character: " + std::string(yytext));
-}
+           }
 
 <<EOF>>    return yy::parser::make_YYEOF (loc);
 

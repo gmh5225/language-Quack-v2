@@ -1,5 +1,9 @@
-a = 2;
-if (a == 2) {
-    return 0;
-}
-return 1;
+// RUN: %quick %s
+
+first: Integer = 1;
+second: Integer = 2;
+third: Float = 3.5;
+fourth: Boolean = False;
+
+// CHECK: 1 2 3.5 0
+print first, second, third, fourth;

@@ -20,8 +20,6 @@
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include <iostream>
-
 using namespace llvm;
 cl::opt<bool> DumpAST("dump-ast",
                       cl::desc("prints the AST of the input program"),
@@ -29,8 +27,8 @@ cl::opt<bool> DumpAST("dump-ast",
 cl::opt<bool> EmitLLVMIR("emit-llvm-ir",
                          cl::desc("prints the generated llvm ir to stdout"),
                          cl::init(false));
-cl::opt<std::string> Filename(cl::Positional, cl::desc("<input file>"),
-                              cl::init("-"));
+cl::opt<std::string> Filename(cl::Positional, cl::desc("<input-file>"),
+                              cl::NumOccurrencesFlag::Required);
 namespace llvm::orc {
 
 class JITEngine {
@@ -132,9 +130,10 @@ public:
 } // namespace quack::compiler
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, "Building A JIT - Client.\n");
 
+  cl::ParseCommandLineOptions(argc, argv, "Quick JIT.\n");
   quack::parser::ParserDriver drv;
+
   int programError = drv.parse(Filename);
   if (programError)
     std::exit(programError);

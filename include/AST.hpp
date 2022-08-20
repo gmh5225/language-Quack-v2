@@ -51,7 +51,8 @@ public:
     StaticAssignment,
     Return,
     If,
-    While
+    While,
+    Print
   };
 
   Kind getKind() const { return _kind; }
@@ -230,7 +231,7 @@ public:
 
   const Identifier &getType() const { return *_type; }
   const Identifier &getVar() const { return *_var; }
-  bool isMemberDecl() const { return memberDecl;}
+  bool isMemberDecl() const { return memberDecl; }
 };
 
 class StaticMemberDecl final : public VarDecl {
@@ -334,6 +335,17 @@ public:
 class Arguments final : public Sequence<Expression>, public ASTNode {
 public:
   explicit Arguments(const Location &loc) : ASTNode(loc) {}
+};
+
+class PrintStatement : public Statement {
+  std::unique_ptr<Arguments> exprList;
+
+public:
+  PrintStatement(Location loc, std::unique_ptr<Arguments> exprList)
+      : Statement(std::move(loc), Statement::Kind::Print),
+        exprList(std::move(exprList)) {}
+
+  auto &getArgs() const { return exprList; }
 };
 
 class Parameters final : public Sequence<VarDecl>, public ASTNode {

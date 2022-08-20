@@ -194,6 +194,14 @@ bool StmtTypeChecker::visitReturn(const ast::Return &returnStmt) {
   return true;
 }
 
+bool StmtTypeChecker::visitPrintStatement(const ast::PrintStatement &printStmt) {
+  for (auto &expr: *printStmt.getArgs()) {
+    if(!exprTC.visitExpression(*expr))
+      return false;
+  }
+  return true;
+}
+
 bool StmtTypeChecker::isLegal() {
   (void)env.addNewScope();
   auto res = visitCompoundStmt(cmpStmt);

@@ -72,7 +72,7 @@ public:
 class BoolType : public Primitive {
 public:
   explicit BoolType(llvm::LLVMContext &cntx)
-      : Primitive(cntx, llvm::IntegerType::getInt64Ty(cntx)) {}
+      : Primitive(cntx, llvm::IntegerType::getInt8Ty(cntx)) {}
   llvm::StringRef getName() override { return "Boolean"; }
   llvm::Value *dispatch(llvm::IRBuilder<> &b, const char *method,
                         llvm::Value *self,
@@ -99,14 +99,17 @@ public:
                            llvm::ArrayRef<llvm::Value *> args) override;
 };
 
-class LLVMTypeRegistery : public llvm::StringMap<std::unique_ptr<LLVMType>> {
+class LLVMTypeRegistery {
   llvm::LLVMContext &cntx;
+  llvm::StringMap<std::unique_ptr<LLVMType>> stringmap;
+  llvm::DenseMap<llvm::Type *, LLVMType *> typemap;
 
 public:
   explicit LLVMTypeRegistery(llvm::LLVMContext &cntx);
   LLVMTypeRegistery(const LLVMTypeRegistery &) = delete;
   LLVMTypeRegistery &operator=(const LLVMTypeRegistery &) = delete;
   LLVMType *get(type::QType *qtype);
+  LLVMType *get(llvm::Type *type);
 };
 
 } // namespace codegen

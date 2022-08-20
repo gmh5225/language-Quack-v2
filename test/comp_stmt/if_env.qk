@@ -1,7 +1,0 @@
-a: Integer = 50;
-if (False) {
-    a: Float = 30.3;
-} else {
-    a = 40;
-}
-return a;

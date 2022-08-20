@@ -1,1 +1,7 @@
-!True;
+// RUN: %quick %s
+
+// CHECK: 0
+print !True;
+
+// CHECK: 1
+print !False;

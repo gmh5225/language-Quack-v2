@@ -1,1 +1,10 @@
-10 <= 2;
+// RUN: %quick %s
+
+// CHECK: 0
+print 10 <= 2;
+
+// CHECK: 1
+print 10 <= 10;
+
+// CHECK: 1
+print 10 <= 20;

@@ -77,6 +77,8 @@ public:
       DISPATCH(If, statement);
     case Statement::Kind::While:
       DISPATCH(While, statement);
+    case Statement::Kind::Print:
+      DISPATCH(PrintStatement, statement);
     default:
       return RetType();
     }

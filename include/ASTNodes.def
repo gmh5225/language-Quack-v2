@@ -42,7 +42,8 @@ AST_NODES
   STMT_NODE_HANDLER(ValueStmt)                                                 \
   STMT_NODE_HANDLER(Return)                                                    \
   STMT_NODE_HANDLER(If)                                                        \
-  STMT_NODE_HANDLER(While)
+  STMT_NODE_HANDLER(While)                                                     \
+  STMT_NODE_HANDLER(PrintStatement)
 
 AST_NODES
 #undef AST_NODES

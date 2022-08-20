@@ -11,7 +11,7 @@
 # =============================================================================
 
 # =============================================================================
-# Project: Quack
+# Project: Quick
 # Configurations: Debug
 # =============================================================================
 
@@ -46,186 +46,6 @@ cmake_ninja_workdir = /home/parsab/dev/Quack-v2/cmake-build-debug/
 
 build intrinsics_gen: phony
 
-# =============================================================================
-# Object build statements for EXECUTABLE target quack
-
-
-#############################################
-# Order-only phony target for quack
-
-build cmake_object_order_depends_target_quack: phony || Lexer.cpp Parser.cpp Parser.hpp Parser.output
-
-build CMakeFiles/quack.dir/Parser.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/cmake-build-debug/Parser.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/Parser.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/Lexer.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/cmake-build-debug/Lexer.cpp | Parser.hpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/Lexer.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/AST.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/AST.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/AST.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/Builtin.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/Builtin.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/Builtin.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/Environment.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/Environment.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/Environment.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/EnvironmentBuilder.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/EnvironmentBuilder.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/EnvironmentBuilder.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/ExprTypeChecker.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/ExprTypeChecker.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/ExprTypeChecker.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/FnCodeGen.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/FnCodeGen.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/FnCodeGen.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/LLVMType.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/LLVMType.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/LLVMType.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/main.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/main.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/main.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/ParserDriver.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/ParserDriver.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/ParserDriver.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/PrintVisitor.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/PrintVisitor.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/PrintVisitor.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/QType.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/QType.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/QType.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/QTypeDB.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/QTypeDB.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/QTypeDB.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/StmtTypeChecker.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/StmtTypeChecker.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/StmtTypeChecker.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/TypeChecker.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/TypeChecker.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/TypeChecker.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-build CMakeFiles/quack.dir/src/Utils.cpp.o: CXX_COMPILER__quack_Debug /home/parsab/dev/Quack-v2/src/Utils.cpp || cmake_object_order_depends_target_quack
-  DEP_FILE = CMakeFiles/quack.dir/src/Utils.cpp.o.d
-  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
-  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include
-  OBJECT_DIR = CMakeFiles/quack.dir
-  OBJECT_FILE_DIR = CMakeFiles/quack.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_PDB = quack.pdb
-
-
-# =============================================================================
-# Link build statements for EXECUTABLE target quack
-
-
-#############################################
-# Link the executable quack
-
-build quack: CXX_EXECUTABLE_LINKER__quack_Debug CMakeFiles/quack.dir/Parser.cpp.o CMakeFiles/quack.dir/Lexer.cpp.o CMakeFiles/quack.dir/src/AST.cpp.o CMakeFiles/quack.dir/src/Builtin.cpp.o CMakeFiles/quack.dir/src/Environment.cpp.o CMakeFiles/quack.dir/src/EnvironmentBuilder.cpp.o CMakeFiles/quack.dir/src/ExprTypeChecker.cpp.o CMakeFiles/quack.dir/src/FnCodeGen.cpp.o CMakeFiles/quack.dir/src/LLVMType.cpp.o CMakeFiles/quack.dir/src/main.cpp.o CMakeFiles/quack.dir/src/ParserDriver.cpp.o CMakeFiles/quack.dir/src/PrintVisitor.cpp.o CMakeFiles/quack.dir/src/QType.cpp.o CMakeFiles/quack.dir/src/QTypeDB.cpp.o CMakeFiles/quack.dir/src/StmtTypeChecker.cpp.o CMakeFiles/quack.dir/src/TypeChecker.cpp.o CMakeFiles/quack.dir/src/Utils.cpp.o | /usr/lib/llvm-10/lib/libLLVMSupport.a /usr/lib/llvm-10/lib/libLLVMCore.a /usr/lib/llvm-10/lib/libLLVMIRReader.a /usr/lib/llvm-10/lib/libLLVMTarget.a /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a /usr/lib/llvm-10/lib/libLLVMMCJIT.a /usr/lib/llvm-10/lib/libLLVMLinker.a /usr/lib/llvm-10/lib/libLLVMPasses.a /usr/lib/llvm-10/lib/libLLVMX86CodeGen.a /usr/lib/llvm-10/lib/libLLVMX86AsmParser.a /usr/lib/llvm-10/lib/libLLVMX86Desc.a /usr/lib/llvm-10/lib/libLLVMX86Disassembler.a /usr/lib/llvm-10/lib/libLLVMX86Info.a /usr/lib/llvm-10/lib/libLLVMX86Utils.a /usr/lib/llvm-10/lib/libLLVMAnalysis.a /usr/lib/llvm-10/lib/libLLVMCore.a /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a /usr/lib/llvm-10/lib/libLLVMInstCombine.a /usr/lib/llvm-10/lib/libLLVMObject.a /usr/lib/llvm-10/lib/libLLVMOrcJIT.a /usr/lib/llvm-10/lib/libLLVMRuntimeDyld.a /usr/lib/llvm-10/lib/libLLVMScalarOpts.a /usr/lib/llvm-10/lib/libLLVMSupport.a /usr/lib/llvm-10/lib/libLLVMAsmPrinter.a /usr/lib/llvm-10/lib/libLLVMDebugInfoDWARF.a /usr/lib/llvm-10/lib/libLLVMCFGuard.a /usr/lib/llvm-10/lib/libLLVMGlobalISel.a /usr/lib/llvm-10/lib/libLLVMSelectionDAG.a /usr/lib/llvm-10/lib/libLLVMMCDisassembler.a /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a /usr/lib/llvm-10/lib/libLLVMPasses.a /usr/lib/llvm-10/lib/libLLVMCodeGen.a /usr/lib/llvm-10/lib/libLLVMTarget.a /usr/lib/llvm-10/lib/libLLVMipo.a /usr/lib/llvm-10/lib/libLLVMIRReader.a /usr/lib/llvm-10/lib/libLLVMAsmParser.a /usr/lib/llvm-10/lib/libLLVMLinker.a /usr/lib/llvm-10/lib/libLLVMScalarOpts.a /usr/lib/llvm-10/lib/libLLVMInstCombine.a /usr/lib/llvm-10/lib/libLLVMAggressiveInstCombine.a /usr/lib/llvm-10/lib/libLLVMInstrumentation.a /usr/lib/llvm-10/lib/libLLVMVectorize.a /usr/lib/llvm-10/lib/libLLVMRuntimeDyld.a /usr/lib/llvm-10/lib/libLLVMTransformUtils.a /usr/lib/llvm-10/lib/libLLVMJITLink.a /usr/lib/llvm-10/lib/libLLVMOrcError.a /usr/lib/llvm-10/lib/libLLVMBitWriter.a /usr/lib/llvm-10/lib/libLLVMAnalysis.a /usr/lib/llvm-10/lib/libLLVMProfileData.a /usr/lib/llvm-10/lib/libLLVMObject.a /usr/lib/llvm-10/lib/libLLVMBitReader.a /usr/lib/llvm-10/lib/libLLVMCore.a /usr/lib/llvm-10/lib/libLLVMRemarks.a /usr/lib/llvm-10/lib/libLLVMBitstreamReader.a /usr/lib/llvm-10/lib/libLLVMMCParser.a /usr/lib/llvm-10/lib/libLLVMTextAPI.a /usr/lib/llvm-10/lib/libLLVMMC.a /usr/lib/llvm-10/lib/libLLVMBinaryFormat.a /usr/lib/llvm-10/lib/libLLVMDebugInfoCodeView.a /usr/lib/llvm-10/lib/libLLVMDebugInfoMSF.a /usr/lib/llvm-10/lib/libLLVMSupport.a /usr/lib/llvm-10/lib/libLLVMDemangle.a
-  FLAGS = -g
-  LINK_LIBRARIES = /usr/lib/llvm-10/lib/libLLVMSupport.a  /usr/lib/llvm-10/lib/libLLVMCore.a  /usr/lib/llvm-10/lib/libLLVMIRReader.a  /usr/lib/llvm-10/lib/libLLVMTarget.a  /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a  /usr/lib/llvm-10/lib/libLLVMMCJIT.a  /usr/lib/llvm-10/lib/libLLVMLinker.a  /usr/lib/llvm-10/lib/libLLVMPasses.a  /usr/lib/llvm-10/lib/libLLVMX86CodeGen.a  /usr/lib/llvm-10/lib/libLLVMX86AsmParser.a  /usr/lib/llvm-10/lib/libLLVMX86Desc.a  /usr/lib/llvm-10/lib/libLLVMX86Disassembler.a  /usr/lib/llvm-10/lib/libLLVMX86Info.a  /usr/lib/llvm-10/lib/libLLVMX86Utils.a  /usr/lib/llvm-10/lib/libLLVMAnalysis.a  /usr/lib/llvm-10/lib/libLLVMCore.a  /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a  /usr/lib/llvm-10/lib/libLLVMInstCombine.a  /usr/lib/llvm-10/lib/libLLVMObject.a  /usr/lib/llvm-10/lib/libLLVMOrcJIT.a  /usr/lib/llvm-10/lib/libLLVMRuntimeDyld.a  /usr/lib/llvm-10/lib/libLLVMScalarOpts.a  /usr/lib/llvm-10/lib/libLLVMSupport.a  /usr/lib/llvm-10/lib/libLLVMAsmPrinter.a  /usr/lib/llvm-10/lib/libLLVMDebugInfoDWARF.a  /usr/lib/llvm-10/lib/libLLVMCFGuard.a  /usr/lib/llvm-10/lib/libLLVMGlobalISel.a  /usr/lib/llvm-10/lib/libLLVMSelectionDAG.a  /usr/lib/llvm-10/lib/libLLVMMCDisassembler.a  /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a  /usr/lib/llvm-10/lib/libLLVMPasses.a  /usr/lib/llvm-10/lib/libLLVMCodeGen.a  /usr/lib/llvm-10/lib/libLLVMTarget.a  /usr/lib/llvm-10/lib/libLLVMipo.a  /usr/lib/llvm-10/lib/libLLVMIRReader.a  /usr/lib/llvm-10/lib/libLLVMAsmParser.a  /usr/lib/llvm-10/lib/libLLVMLinker.a  /usr/lib/llvm-10/lib/libLLVMScalarOpts.a  /usr/lib/llvm-10/lib/libLLVMInstCombine.a  /usr/lib/llvm-10/lib/libLLVMAggressiveInstCombine.a  /usr/lib/llvm-10/lib/libLLVMInstrumentation.a  /usr/lib/llvm-10/lib/libLLVMVectorize.a  /usr/lib/llvm-10/lib/libLLVMRuntimeDyld.a  /usr/lib/llvm-10/lib/libLLVMTransformUtils.a  /usr/lib/llvm-10/lib/libLLVMJITLink.a  /usr/lib/llvm-10/lib/libLLVMOrcError.a  /usr/lib/llvm-10/lib/libLLVMBitWriter.a  /usr/lib/llvm-10/lib/libLLVMAnalysis.a  /usr/lib/llvm-10/lib/libLLVMProfileData.a  /usr/lib/llvm-10/lib/libLLVMObject.a  /usr/lib/llvm-10/lib/libLLVMBitReader.a  /usr/lib/llvm-10/lib/libLLVMCore.a  /usr/lib/llvm-10/lib/libLLVMRemarks.a  /usr/lib/llvm-10/lib/libLLVMBitstreamReader.a  /usr/lib/llvm-10/lib/libLLVMMCParser.a  /usr/lib/llvm-10/lib/libLLVMTextAPI.a  /usr/lib/llvm-10/lib/libLLVMMC.a  /usr/lib/llvm-10/lib/libLLVMBinaryFormat.a  /usr/lib/llvm-10/lib/libLLVMDebugInfoCodeView.a  /usr/lib/llvm-10/lib/libLLVMDebugInfoMSF.a  /usr/lib/llvm-10/lib/libLLVMSupport.a  -lz  -lrt  -ldl  -ltinfo  -lpthread  -lm  /usr/lib/llvm-10/lib/libLLVMDemangle.a
-  OBJECT_DIR = CMakeFiles/quack.dir
-  POST_BUILD = :
-  PRE_LINK = :
-  TARGET_COMPILE_PDB = CMakeFiles/quack.dir/
-  TARGET_FILE = quack
-  TARGET_PDB = quack.pdb
-
 
 #############################################
 # Utility command for edit_cache
@@ -250,26 +70,244 @@ build CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
 
 build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 
+# =============================================================================
+# Write statements declared in CMakeLists.txt:
+# /home/parsab/dev/Quack-v2/CMakeLists.txt
+# =============================================================================
+
+# =============================================================================
+# Object build statements for EXECUTABLE target quick
+
 
 #############################################
-# Custom command for Parser.cpp
+# Order-only phony target for quick
 
-build Parser.cpp Parser.output Parser.hpp | ${cmake_ninja_workdir}Parser.cpp ${cmake_ninja_workdir}Parser.output ${cmake_ninja_workdir}Parser.hpp: CUSTOM_COMMAND ../src/Parser.ypp
-  COMMAND = cd /home/parsab/dev/Quack-v2/cmake-build-debug && /usr/local/bin/bison -d --verbose -o /home/parsab/dev/Quack-v2/cmake-build-debug/Parser.cpp /home/parsab/dev/Quack-v2/src/Parser.ypp
+build cmake_object_order_depends_target_quick: phony || src/Lexer.cpp src/Parser.cpp src/Parser.hpp src/Parser.output
+
+build src/CMakeFiles/quick.dir/Parser.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/cmake-build-debug/src/Parser.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/Parser.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/Lexer.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/cmake-build-debug/src/Lexer.cpp | src/Parser.hpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/Lexer.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/AST.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/AST.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/AST.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/Builtin.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/Builtin.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/Builtin.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/Environment.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/Environment.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/Environment.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/EnvironmentBuilder.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/EnvironmentBuilder.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/EnvironmentBuilder.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/ExprTypeChecker.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/ExprTypeChecker.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/ExprTypeChecker.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/FnCodeGen.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/FnCodeGen.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/FnCodeGen.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/LLVMType.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/LLVMType.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/LLVMType.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/main.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/main.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/main.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/ParserDriver.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/ParserDriver.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/ParserDriver.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/PrintVisitor.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/PrintVisitor.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/PrintVisitor.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/QType.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/QType.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/QType.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/QTypeDB.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/QTypeDB.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/QTypeDB.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/StmtTypeChecker.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/StmtTypeChecker.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/StmtTypeChecker.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/TypeChecker.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/TypeChecker.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/TypeChecker.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+build src/CMakeFiles/quick.dir/Utils.cpp.o: CXX_COMPILER__quick_Debug /home/parsab/dev/Quack-v2/src/Utils.cpp || cmake_object_order_depends_target_quick
+  DEP_FILE = src/CMakeFiles/quick.dir/Utils.cpp.o.d
+  FLAGS = -g -fvisibility=default   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+  INCLUDES = -I/usr/lib/llvm-10/include -I/home/parsab/dev/Quack-v2/cmake-build-debug -I/home/parsab/dev/Quack-v2/include -I/home/parsab/dev/Quack-v2/cmake-build-debug/src
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  OBJECT_FILE_DIR = src/CMakeFiles/quick.dir
+
+
+# =============================================================================
+# Link build statements for EXECUTABLE target quick
+
+
+#############################################
+# Link the executable quick
+
+build quick: CXX_EXECUTABLE_LINKER__quick_Debug src/CMakeFiles/quick.dir/Parser.cpp.o src/CMakeFiles/quick.dir/Lexer.cpp.o src/CMakeFiles/quick.dir/AST.cpp.o src/CMakeFiles/quick.dir/Builtin.cpp.o src/CMakeFiles/quick.dir/Environment.cpp.o src/CMakeFiles/quick.dir/EnvironmentBuilder.cpp.o src/CMakeFiles/quick.dir/ExprTypeChecker.cpp.o src/CMakeFiles/quick.dir/FnCodeGen.cpp.o src/CMakeFiles/quick.dir/LLVMType.cpp.o src/CMakeFiles/quick.dir/main.cpp.o src/CMakeFiles/quick.dir/ParserDriver.cpp.o src/CMakeFiles/quick.dir/PrintVisitor.cpp.o src/CMakeFiles/quick.dir/QType.cpp.o src/CMakeFiles/quick.dir/QTypeDB.cpp.o src/CMakeFiles/quick.dir/StmtTypeChecker.cpp.o src/CMakeFiles/quick.dir/TypeChecker.cpp.o src/CMakeFiles/quick.dir/Utils.cpp.o | /usr/lib/llvm-10/lib/libLLVMSupport.a /usr/lib/llvm-10/lib/libLLVMCore.a /usr/lib/llvm-10/lib/libLLVMIRReader.a /usr/lib/llvm-10/lib/libLLVMTarget.a /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a /usr/lib/llvm-10/lib/libLLVMMCJIT.a /usr/lib/llvm-10/lib/libLLVMLinker.a /usr/lib/llvm-10/lib/libLLVMPasses.a /usr/lib/llvm-10/lib/libLLVMX86CodeGen.a /usr/lib/llvm-10/lib/libLLVMX86AsmParser.a /usr/lib/llvm-10/lib/libLLVMX86Desc.a /usr/lib/llvm-10/lib/libLLVMX86Disassembler.a /usr/lib/llvm-10/lib/libLLVMX86Info.a /usr/lib/llvm-10/lib/libLLVMX86Utils.a /usr/lib/llvm-10/lib/libLLVMAnalysis.a /usr/lib/llvm-10/lib/libLLVMCore.a /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a /usr/lib/llvm-10/lib/libLLVMInstCombine.a /usr/lib/llvm-10/lib/libLLVMObject.a /usr/lib/llvm-10/lib/libLLVMOrcJIT.a /usr/lib/llvm-10/lib/libLLVMRuntimeDyld.a /usr/lib/llvm-10/lib/libLLVMScalarOpts.a /usr/lib/llvm-10/lib/libLLVMSupport.a /usr/lib/llvm-10/lib/libLLVMAsmPrinter.a /usr/lib/llvm-10/lib/libLLVMDebugInfoDWARF.a /usr/lib/llvm-10/lib/libLLVMCFGuard.a /usr/lib/llvm-10/lib/libLLVMGlobalISel.a /usr/lib/llvm-10/lib/libLLVMSelectionDAG.a /usr/lib/llvm-10/lib/libLLVMMCDisassembler.a /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a /usr/lib/llvm-10/lib/libLLVMPasses.a /usr/lib/llvm-10/lib/libLLVMCodeGen.a /usr/lib/llvm-10/lib/libLLVMTarget.a /usr/lib/llvm-10/lib/libLLVMipo.a /usr/lib/llvm-10/lib/libLLVMIRReader.a /usr/lib/llvm-10/lib/libLLVMAsmParser.a /usr/lib/llvm-10/lib/libLLVMLinker.a /usr/lib/llvm-10/lib/libLLVMScalarOpts.a /usr/lib/llvm-10/lib/libLLVMInstCombine.a /usr/lib/llvm-10/lib/libLLVMAggressiveInstCombine.a /usr/lib/llvm-10/lib/libLLVMInstrumentation.a /usr/lib/llvm-10/lib/libLLVMVectorize.a /usr/lib/llvm-10/lib/libLLVMRuntimeDyld.a /usr/lib/llvm-10/lib/libLLVMTransformUtils.a /usr/lib/llvm-10/lib/libLLVMJITLink.a /usr/lib/llvm-10/lib/libLLVMOrcError.a /usr/lib/llvm-10/lib/libLLVMBitWriter.a /usr/lib/llvm-10/lib/libLLVMAnalysis.a /usr/lib/llvm-10/lib/libLLVMProfileData.a /usr/lib/llvm-10/lib/libLLVMObject.a /usr/lib/llvm-10/lib/libLLVMBitReader.a /usr/lib/llvm-10/lib/libLLVMCore.a /usr/lib/llvm-10/lib/libLLVMRemarks.a /usr/lib/llvm-10/lib/libLLVMBitstreamReader.a /usr/lib/llvm-10/lib/libLLVMMCParser.a /usr/lib/llvm-10/lib/libLLVMTextAPI.a /usr/lib/llvm-10/lib/libLLVMMC.a /usr/lib/llvm-10/lib/libLLVMBinaryFormat.a /usr/lib/llvm-10/lib/libLLVMDebugInfoCodeView.a /usr/lib/llvm-10/lib/libLLVMDebugInfoMSF.a /usr/lib/llvm-10/lib/libLLVMSupport.a /usr/lib/llvm-10/lib/libLLVMDemangle.a
+  FLAGS = -g
+  LINK_LIBRARIES = /usr/lib/llvm-10/lib/libLLVMSupport.a  /usr/lib/llvm-10/lib/libLLVMCore.a  /usr/lib/llvm-10/lib/libLLVMIRReader.a  /usr/lib/llvm-10/lib/libLLVMTarget.a  /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a  /usr/lib/llvm-10/lib/libLLVMMCJIT.a  /usr/lib/llvm-10/lib/libLLVMLinker.a  /usr/lib/llvm-10/lib/libLLVMPasses.a  /usr/lib/llvm-10/lib/libLLVMX86CodeGen.a  /usr/lib/llvm-10/lib/libLLVMX86AsmParser.a  /usr/lib/llvm-10/lib/libLLVMX86Desc.a  /usr/lib/llvm-10/lib/libLLVMX86Disassembler.a  /usr/lib/llvm-10/lib/libLLVMX86Info.a  /usr/lib/llvm-10/lib/libLLVMX86Utils.a  /usr/lib/llvm-10/lib/libLLVMAnalysis.a  /usr/lib/llvm-10/lib/libLLVMCore.a  /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a  /usr/lib/llvm-10/lib/libLLVMInstCombine.a  /usr/lib/llvm-10/lib/libLLVMObject.a  /usr/lib/llvm-10/lib/libLLVMOrcJIT.a  /usr/lib/llvm-10/lib/libLLVMRuntimeDyld.a  /usr/lib/llvm-10/lib/libLLVMScalarOpts.a  /usr/lib/llvm-10/lib/libLLVMSupport.a  /usr/lib/llvm-10/lib/libLLVMAsmPrinter.a  /usr/lib/llvm-10/lib/libLLVMDebugInfoDWARF.a  /usr/lib/llvm-10/lib/libLLVMCFGuard.a  /usr/lib/llvm-10/lib/libLLVMGlobalISel.a  /usr/lib/llvm-10/lib/libLLVMSelectionDAG.a  /usr/lib/llvm-10/lib/libLLVMMCDisassembler.a  /usr/lib/llvm-10/lib/libLLVMExecutionEngine.a  /usr/lib/llvm-10/lib/libLLVMPasses.a  /usr/lib/llvm-10/lib/libLLVMCodeGen.a  /usr/lib/llvm-10/lib/libLLVMTarget.a  /usr/lib/llvm-10/lib/libLLVMipo.a  /usr/lib/llvm-10/lib/libLLVMIRReader.a  /usr/lib/llvm-10/lib/libLLVMAsmParser.a  /usr/lib/llvm-10/lib/libLLVMLinker.a  /usr/lib/llvm-10/lib/libLLVMScalarOpts.a  /usr/lib/llvm-10/lib/libLLVMInstCombine.a  /usr/lib/llvm-10/lib/libLLVMAggressiveInstCombine.a  /usr/lib/llvm-10/lib/libLLVMInstrumentation.a  /usr/lib/llvm-10/lib/libLLVMVectorize.a  /usr/lib/llvm-10/lib/libLLVMRuntimeDyld.a  /usr/lib/llvm-10/lib/libLLVMTransformUtils.a  /usr/lib/llvm-10/lib/libLLVMJITLink.a  /usr/lib/llvm-10/lib/libLLVMOrcError.a  /usr/lib/llvm-10/lib/libLLVMBitWriter.a  /usr/lib/llvm-10/lib/libLLVMAnalysis.a  /usr/lib/llvm-10/lib/libLLVMProfileData.a  /usr/lib/llvm-10/lib/libLLVMObject.a  /usr/lib/llvm-10/lib/libLLVMBitReader.a  /usr/lib/llvm-10/lib/libLLVMCore.a  /usr/lib/llvm-10/lib/libLLVMRemarks.a  /usr/lib/llvm-10/lib/libLLVMBitstreamReader.a  /usr/lib/llvm-10/lib/libLLVMMCParser.a  /usr/lib/llvm-10/lib/libLLVMTextAPI.a  /usr/lib/llvm-10/lib/libLLVMMC.a  /usr/lib/llvm-10/lib/libLLVMBinaryFormat.a  /usr/lib/llvm-10/lib/libLLVMDebugInfoCodeView.a  /usr/lib/llvm-10/lib/libLLVMDebugInfoMSF.a  /usr/lib/llvm-10/lib/libLLVMSupport.a  -lz  -lrt  -ldl  -ltinfo  -lpthread  -lm  /usr/lib/llvm-10/lib/libLLVMDemangle.a
+  OBJECT_DIR = src/CMakeFiles/quick.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = quick
+  TARGET_PDB = quick.dbg
+
+
+#############################################
+# Utility command for edit_cache
+
+build src/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
+  COMMAND = cd /home/parsab/dev/Quack-v2/cmake-build-debug/src && /snap/clion/204/bin/cmake/linux/bin/ccmake -S/home/parsab/dev/Quack-v2 -B/home/parsab/dev/Quack-v2/cmake-build-debug
+  DESC = Running CMake cache editor...
+  pool = console
+  restat = 1
+
+build src/edit_cache: phony src/CMakeFiles/edit_cache.util
+
+
+#############################################
+# Utility command for rebuild_cache
+
+build src/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
+  COMMAND = cd /home/parsab/dev/Quack-v2/cmake-build-debug/src && /snap/clion/204/bin/cmake/linux/bin/cmake --regenerate-during-build -S/home/parsab/dev/Quack-v2 -B/home/parsab/dev/Quack-v2/cmake-build-debug
+  DESC = Running CMake to regenerate build system...
+  pool = console
+  restat = 1
+
+build src/rebuild_cache: phony src/CMakeFiles/rebuild_cache.util
+
+
+#############################################
+# Custom command for src/Parser.cpp
+
+build src/Parser.cpp src/Parser.output src/Parser.hpp | ${cmake_ninja_workdir}src/Parser.cpp ${cmake_ninja_workdir}src/Parser.output ${cmake_ninja_workdir}src/Parser.hpp: CUSTOM_COMMAND ../src/Parser.ypp
+  COMMAND = cd /home/parsab/dev/Quack-v2/cmake-build-debug/src && /usr/local/bin/bison -d --verbose -o /home/parsab/dev/Quack-v2/cmake-build-debug/src/Parser.cpp /home/parsab/dev/Quack-v2/src/Parser.ypp
   DESC = [BISON][Parser] Building parser with bison 3.7.1
   restat = 1
 
 
 #############################################
-# Custom command for Lexer.cpp
+# Custom command for src/Lexer.cpp
 
-build Lexer.cpp | ${cmake_ninja_workdir}Lexer.cpp: CUSTOM_COMMAND ../src/Lexer.lpp
-  COMMAND = cd /home/parsab/dev/Quack-v2 && /usr/local/bin/flex -o/home/parsab/dev/Quack-v2/cmake-build-debug/Lexer.cpp src/Lexer.lpp
+build src/Lexer.cpp | ${cmake_ninja_workdir}src/Lexer.cpp: CUSTOM_COMMAND ../src/Lexer.lpp
+  COMMAND = cd /home/parsab/dev/Quack-v2/src && /usr/local/bin/flex -o/home/parsab/dev/Quack-v2/cmake-build-debug/src/Lexer.cpp Lexer.lpp
   DESC = [FLEX][Lexer] Building scanner with flex 2.6.4
   restat = 1
 
 # =============================================================================
+# Write statements declared in CMakeLists.txt:
+# /home/parsab/dev/Quack-v2/CMakeLists.txt
+# =============================================================================
+
+
+#############################################
+# Utility command for check
+
+build test/check: phony test/CMakeFiles/check quick
+
+
+#############################################
+# Utility command for edit_cache
+
+build test/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
+  COMMAND = cd /home/parsab/dev/Quack-v2/cmake-build-debug/test && /snap/clion/204/bin/cmake/linux/bin/ccmake -S/home/parsab/dev/Quack-v2 -B/home/parsab/dev/Quack-v2/cmake-build-debug
+  DESC = Running CMake cache editor...
+  pool = console
+  restat = 1
+
+build test/edit_cache: phony test/CMakeFiles/edit_cache.util
+
+
+#############################################
+# Utility command for rebuild_cache
+
+build test/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
+  COMMAND = cd /home/parsab/dev/Quack-v2/cmake-build-debug/test && /snap/clion/204/bin/cmake/linux/bin/cmake --regenerate-during-build -S/home/parsab/dev/Quack-v2 -B/home/parsab/dev/Quack-v2/cmake-build-debug
+  DESC = Running CMake to regenerate build system...
+  pool = console
+  restat = 1
+
+build test/rebuild_cache: phony test/CMakeFiles/rebuild_cache.util
+
+
+#############################################
+# Custom command for test/CMakeFiles/check
+
+build test/CMakeFiles/check | ${cmake_ninja_workdir}test/CMakeFiles/check: CUSTOM_COMMAND quick || quick
+  COMMAND = cd /home/parsab/dev/Quack-v2/cmake-build-debug/test && lit /home/parsab/dev/Quack-v2/cmake-build-debug/test -v
+
+# =============================================================================
 # Target aliases.
+
+build check: phony test/check
 
 # =============================================================================
 # Folder targets.
@@ -279,7 +317,21 @@ build Lexer.cpp | ${cmake_ninja_workdir}Lexer.cpp: CUSTOM_COMMAND ../src/Lexer.l
 #############################################
 # Folder: /home/parsab/dev/Quack-v2/cmake-build-debug
 
-build all: phony quack
+build all: phony src/all test/all
+
+# =============================================================================
+
+#############################################
+# Folder: /home/parsab/dev/Quack-v2/cmake-build-debug/src
+
+build src/all: phony quick
+
+# =============================================================================
+
+#############################################
+# Folder: /home/parsab/dev/Quack-v2/cmake-build-debug/test
+
+build test/all: phony
 
 # =============================================================================
 # Built-in targets
@@ -288,14 +340,14 @@ build all: phony quack
 #############################################
 # Re-run CMake if any of its inputs changed.
 
-build build.ninja: RERUN_CMAKE | ../CMakeLists.txt /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCCompiler.cmake.in /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCCompilerABI.c /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCXXCompiler.cmake.in /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCXXCompilerABI.cpp /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCXXInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCommonLanguageInclude.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCompilerIdDetection.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCXXCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCompileFeatures.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCompilerABI.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCompilerId.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineSystem.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeFindBinUtils.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeGenericSystem.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeInitializeConfigs.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeLanguageInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeParseImplicitIncludeInfo.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeParseImplicitLinkInfo.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeParseLibraryArchitecture.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeSystem.cmake.in /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeSystemSpecificInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeSystemSpecificInitialize.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeTestCCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeTestCXXCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeTestCompilerCommon.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/ADSP-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/ARMCC-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/ARMClang-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/AppleClang-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Borland-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Bruce-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/CMakeCommonCompilerMacros.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-DetermineCompilerInternal.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-FindBinUtils.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Comeau-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Compaq-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Compaq-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Cray-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Embarcadero-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Fujitsu-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/FujitsuClang-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/GHS-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/GNU-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/GNU-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/GNU.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/HP-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/HP-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IAR-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IBMCPP-C-DetermineVersionInternal.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IBMCPP-CXX-DetermineVersionInternal.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IBMClang-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IBMClang-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Intel-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IntelLLVM-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/LCC-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/LCC-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/MSVC-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/NVHPC-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/NVIDIA-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/OpenWatcom-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/PGI-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/PathScale-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/SCO-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/SDCC-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/SunPro-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/SunPro-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/TI-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/TinyCC-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/VisualAge-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/VisualAge-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Watcom-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/XL-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/XL-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/XLClang-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/XLClang-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/zOS-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/zOS-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindBISON.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindFLEX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindPackageHandleStandardArgs.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindPackageMessage.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Internal/FeatureTesting.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-Clang-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-Clang-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-Determine-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/UnixPaths.cmake /usr/lib/llvm-10/cmake/LLVMConfig.cmake /usr/lib/llvm-10/cmake/LLVMConfigVersion.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVM-Config.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVMExports-relwithdebinfo.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVMExports.cmake CMakeCache.txt CMakeFiles/3.23.2/CMakeCCompiler.cmake CMakeFiles/3.23.2/CMakeCXXCompiler.cmake CMakeFiles/3.23.2/CMakeSystem.cmake
+build build.ninja: RERUN_CMAKE | ../CMakeLists.txt ../src/CMakeLists.txt ../test/CMakeLists.txt ../test/lit.site.cfg.py.in /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCXXInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCommonLanguageInclude.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeGenericSystem.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeInitializeConfigs.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeLanguageInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeSystemSpecificInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeSystemSpecificInitialize.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/CMakeCommonCompilerMacros.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/GNU.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindBISON.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindFLEX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindPackageHandleStandardArgs.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindPackageMessage.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-Clang-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-Clang-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/UnixPaths.cmake /usr/lib/llvm-10/cmake/LLVMConfig.cmake /usr/lib/llvm-10/cmake/LLVMConfigVersion.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVM-Config.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVMExports-relwithdebinfo.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVMExports.cmake CMakeCache.txt CMakeFiles/3.23.2/CMakeCCompiler.cmake CMakeFiles/3.23.2/CMakeCXXCompiler.cmake CMakeFiles/3.23.2/CMakeSystem.cmake
   pool = console
 
 
 #############################################
 # A missing CMake input file is not an error.
 
-build ../CMakeLists.txt /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCCompiler.cmake.in /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCCompilerABI.c /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCXXCompiler.cmake.in /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCXXCompilerABI.cpp /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCXXInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCommonLanguageInclude.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCompilerIdDetection.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCXXCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCompileFeatures.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCompilerABI.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineCompilerId.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeDetermineSystem.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeFindBinUtils.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeGenericSystem.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeInitializeConfigs.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeLanguageInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeParseImplicitIncludeInfo.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeParseImplicitLinkInfo.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeParseLibraryArchitecture.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeSystem.cmake.in /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeSystemSpecificInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeSystemSpecificInitialize.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeTestCCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeTestCXXCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeTestCompilerCommon.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/ADSP-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/ARMCC-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/ARMClang-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/AppleClang-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Borland-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Bruce-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/CMakeCommonCompilerMacros.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-DetermineCompilerInternal.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-FindBinUtils.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Comeau-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Compaq-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Compaq-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Cray-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Embarcadero-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Fujitsu-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/FujitsuClang-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/GHS-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/GNU-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/GNU-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/GNU.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/HP-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/HP-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IAR-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IBMCPP-C-DetermineVersionInternal.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IBMCPP-CXX-DetermineVersionInternal.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IBMClang-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IBMClang-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Intel-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/IntelLLVM-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/LCC-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/LCC-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/MSVC-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/NVHPC-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/NVIDIA-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/OpenWatcom-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/PGI-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/PathScale-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/SCO-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/SDCC-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/SunPro-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/SunPro-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/TI-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/TinyCC-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/VisualAge-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/VisualAge-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Watcom-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/XL-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/XL-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/XLClang-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/XLClang-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/zOS-C-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/zOS-CXX-DetermineCompiler.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindBISON.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindFLEX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindPackageHandleStandardArgs.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindPackageMessage.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Internal/FeatureTesting.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-Clang-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-Clang-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-Determine-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/UnixPaths.cmake /usr/lib/llvm-10/cmake/LLVMConfig.cmake /usr/lib/llvm-10/cmake/LLVMConfigVersion.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVM-Config.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVMExports-relwithdebinfo.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVMExports.cmake CMakeCache.txt CMakeFiles/3.23.2/CMakeCCompiler.cmake CMakeFiles/3.23.2/CMakeCXXCompiler.cmake CMakeFiles/3.23.2/CMakeSystem.cmake: phony
+build ../CMakeLists.txt ../src/CMakeLists.txt ../test/CMakeLists.txt ../test/lit.site.cfg.py.in /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCXXInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCommonLanguageInclude.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeGenericSystem.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeInitializeConfigs.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeLanguageInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeSystemSpecificInformation.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/CMakeSystemSpecificInitialize.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/CMakeCommonCompilerMacros.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/Clang.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Compiler/GNU.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindBISON.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindFLEX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindPackageHandleStandardArgs.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/FindPackageMessage.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-Clang-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-Clang-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU-C.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU-CXX.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux-GNU.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/Linux.cmake /snap/clion/204/bin/cmake/linux/share/cmake-3.23/Modules/Platform/UnixPaths.cmake /usr/lib/llvm-10/cmake/LLVMConfig.cmake /usr/lib/llvm-10/cmake/LLVMConfigVersion.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVM-Config.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVMExports-relwithdebinfo.cmake /usr/lib/llvm-10/lib/cmake/llvm/LLVMExports.cmake CMakeCache.txt CMakeFiles/3.23.2/CMakeCCompiler.cmake CMakeFiles/3.23.2/CMakeCXXCompiler.cmake CMakeFiles/3.23.2/CMakeSystem.cmake: phony
 
 
 #############################################

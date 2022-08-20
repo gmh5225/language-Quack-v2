@@ -1,1 +1,4 @@
-1 + 2;
+// RUN: %quick %s
+
+// CHECK: 3
+print 1 + 2;

@@ -56,10 +56,12 @@
   LESSEQ   "<="
   MOREEQ   ">="
   EQUAL    "=="
+  NOT_EQUAL "!="
   NEG     "!"
   COLON   ":"
   DOT     "."
   SEMICOLON ";"
+  COMMA     ","
   LPAREN  "("
   RPAREN  ")"
   LBRACK  "{"
@@ -83,6 +85,7 @@
 %token <std::string> ELIF
 %token <std::string> ELSE
 %token <std::string> WHILE
+%token <std::string> PRINT
 
 %type <ptr<TranslationUnit>> translationUnit
 %type <ptr<Statement>> statement
@@ -192,6 +195,7 @@ statement: ";"                      { ; }
     | returnStmt ";"                { $$ = std::move($1); }
     | ifStmt                        { $$ = std::move($1); }
     | whileStmt                     { $$ = std::move($1); }
+    | PRINT args ";"                { $$ = std::make_unique<PrintStatement>(loc(@1, @3), std::move($2)); }
     ;
 
 binaryOperator: "+"                 { $$ = BinaryOperator::Operator::Plus; }
@@ -204,6 +208,7 @@ binaryOperator: "+"                 { $$ = BinaryOperator::Operator::Plus; }
     | "<="                          { $$ = BinaryOperator::Operator::LessEqual; }
     | ">="                          { $$ = BinaryOperator::Operator::GreaterEqual; }
     | "=="                          { $$ = BinaryOperator::Operator::Equals; }
+    | "!="                          { $$ = BinaryOperator::Operator::NotEquals; }
     ;
 
 unaryOperator: "!"                  { $$ = UnaryOperator::Operator::Not; }

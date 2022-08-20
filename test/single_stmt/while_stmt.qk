@@ -1,1 +1,9 @@
-while(True){return 0;}
+// RUN: %quick %s
+
+a = 0;
+while(a < 5) {
+    a = a + 1;
+}
+
+// CHECK: 5
+print a;

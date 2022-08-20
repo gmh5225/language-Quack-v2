@@ -209,6 +209,15 @@ void PrintVisitor::visitUnaryOperator(const UnaryOperator &unOp)  {
   }
 }
 
+void PrintVisitor::visitPrintStatement(const quack::ast::PrintStatement &print) {
+  emitln("Print ");
+  indent(IndentationType::DiagBar);
+  for (auto &expr: *print.getArgs()) {
+    visitExpression(*expr);
+  }
+  dedent();
+}
+
 void PrintVisitor::visitMemberAccess(
     const MemberAccess &memberAccess)  {}
 //

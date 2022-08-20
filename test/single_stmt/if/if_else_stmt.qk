@@ -1,2 +1,11 @@
-if (True) { 1+1; }
-else { 2; }
+// RUN: %quick %s
+
+if (True) { print True; }
+else { print False; }
+
+// CHECK: 1
+
+if (False) { print True; }
+else { print False; }
+
+// CHECK: 0

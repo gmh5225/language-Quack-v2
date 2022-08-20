@@ -1,1 +1,4 @@
-10 * 2;
+// RUN: %quick %s
+
+// CHECK: 20
+print 10 * 2;

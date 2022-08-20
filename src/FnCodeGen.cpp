@@ -68,9 +68,7 @@ llvm::Value *ExprCodeGen::visitUnaryOperator(const ast::UnaryOperator &unOp) {
     return nullptr;
 
   // Getting the corresponding LLVM type for the type
-  auto *type = exprTC.visitExpression(unOp.getOperand());
-  assert(type);
-  auto *llvmType = typeRegistery.get(type);
+  auto *llvmType = typeRegistery.get(val->getType());
   assert(llvmType);
 
   auto dispatch = [&](const char *m) {
@@ -100,9 +98,7 @@ ExprCodeGen::visitBinaryOperator(const ast::BinaryOperator &binOp) {
     return nullptr;
 
   // Getting the corresponding LLVM type for the type of left hand side
-  auto *type = exprTC.visitExpression(binOp.getLHS());
-  assert(type);
-  auto *llvmType = typeRegistery.get(type);
+  auto *llvmType = typeRegistery.get(lhs->getType());
   assert(llvmType);
 
   // Emitting IR for the right hand side
@@ -325,11 +321,8 @@ bool FnCodeGen::visitAssignment(const Assignment &assignment) {
   if (!rhsLLVMVal)
     return false;
 
-  auto *qtype = exprTC.visitExpression(assignment.getRHS());
-  assert(qtype && "qtype must exist at this point");
-
   if (assignment.getLHS().getKind() == LValue::Kind::LValueIdent) {
-    auto *llvmType = tr.get(qtype);
+    auto *llvmType = tr.get(rhsLLVMVal->getType());
     auto &lvalue = static_cast<const LValueIdent &>(assignment.getLHS());
     auto &var = lvalue.getVar().getName();
     if (auto *storage = llvmEnv.lookup(var)) {
@@ -394,6 +387,41 @@ bool FnCodeGen::visitReturn(const ast::Return &returnStmt) {
   }
   assert(lval);
   builder.CreateRet(lval);
+  return true;
+}
+
+bool FnCodeGen::visitPrintStatement(const ast::PrintStatement &print) {
+  // Creating/Getting a reference to systems printf
+  Function *func_printf = module.getFunction("printf");
+  if (!func_printf) {
+    PointerType *Pty = PointerType::get(IntegerType::get(module.getContext(), 8), 0);
+    FunctionType *FuncTy9 = FunctionType::get(IntegerType::get(module.getContext(), 32), true);
+
+    func_printf = Function::Create(FuncTy9, GlobalValue::ExternalLinkage, "printf", module);
+    func_printf->setCallingConv(CallingConv::C);
+  }
+
+  // Creating the format string, and generating code for expressions
+  std::string format;
+  llvm::raw_string_ostream ss(format);
+  SmallVector<Value *, 4> params;
+  for (auto &expr: *print.getArgs()) {
+    auto exprVal = exprCG.visitExpression(*expr);
+    params.push_back(exprVal);
+    auto valType = exprVal->getType();
+    if (valType->isIntegerTy())
+      ss << "%ld ";
+    else if (valType->isDoubleTy())
+      ss << "%g ";
+    else
+      ss << "%s ";
+  }
+  ss << "\n";
+  Value *globalFormatStr = builder.CreateGlobalStringPtr(ss.str());
+  params.insert(params.begin(), globalFormatStr);
+
+  // Creating a call to printf
+  builder.CreateCall(func_printf, params);
   return true;
 }
 

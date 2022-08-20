@@ -1,1 +1,7 @@
-return -1;
+// RUN: %quick %s
+
+// CHECK: -1
+print -1;
+
+// CHECK: -1.5
+print -1.5;
