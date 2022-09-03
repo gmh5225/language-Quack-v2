@@ -5,7 +5,7 @@
 #include "PrintVisitor.hpp"
 #include "AST.hpp"
 
-namespace quack::ast {
+namespace quick::ast {
 
 void PrintVisitor::visitTranslationUnit(
     const TranslationUnit &translationUnit)  {
@@ -19,27 +19,27 @@ void PrintVisitor::visitIntegerLiteral(
     const IntegerLiteral &integerLiteral)  {
   emitln("IntegerLiteral "
          "(" +
-         std::to_string(integerLiteral.getInteger()) + ")");
+         std::to_string(integerLiteral.get()) + ")");
 }
 
 void PrintVisitor::visitFloatLiteral(
     const FloatLiteral &floatLiteral)  {
   emitln("FloatLiteral "
          "(" +
-         std::to_string(floatLiteral.getFloat()) + ")");
+         std::to_string(floatLiteral.get()) + ")");
 }
 
 void PrintVisitor::visitBoolLiteral(const BoolLiteral &boolLiteral)  {
   emitln("BoolLiteral "
          "(" +
-         std::to_string(boolLiteral.getBool()) + ")");
+         std::to_string(boolLiteral.get()) + ")");
 }
 
 void PrintVisitor::visitStringLiteral(
     const StringLiteral &stringLiteral)  {
   emitln("StringLiteral "
          "(" +
-         stringLiteral.getText() + ")");
+         stringLiteral.get() + ")");
 }
 
 void PrintVisitor::visitIdentifier(const Identifier &identifier)  {
@@ -58,8 +58,18 @@ void PrintVisitor::visitVarDecl(const VarDecl &varDecl)  {
   dedent();
 }
 
-void PrintVisitor::visitLValueIdent(const LValueIdent &lValue)  {
-  emitln("LValueIdent ");
+void PrintVisitor::visitStaticMemberDecl(const quick::ast::StaticMemberDecl &memberDecl) {
+  emitln("StaticMemberDecl ");
+  indent(IndentationType::VertBar);
+  visitIdentifier(memberDecl.getObject().getMember());
+  dedent();
+  indent(IndentationType::DiagBar);
+  visitIdentifier(memberDecl.getType());
+  dedent();
+}
+
+void PrintVisitor::visitVariable(const Variable &lValue)  {
+  emitln("Variable ");
   indent(IndentationType::DiagBar);
   visitIdentifier(lValue.getVar());
   dedent();
@@ -93,7 +103,7 @@ void PrintVisitor::visitAssignment(const Assignment &assignment)  {
 void PrintVisitor::visitStaticAssignment(const StaticAssignment &assignment)  {
   emitln("StaticAssignment ");
   indent(IndentationType::VertBar);
-  visitVarDecl(assignment.getDecl());
+  visitDecl(assignment.getDecl());
   dedent();
   indent(IndentationType::DiagBar);
   visitExpression(assignment.getRHS());
@@ -209,7 +219,7 @@ void PrintVisitor::visitUnaryOperator(const UnaryOperator &unOp)  {
   }
 }
 
-void PrintVisitor::visitPrintStatement(const quack::ast::PrintStatement &print) {
+void PrintVisitor::visitPrintStatement(const quick::ast::PrintStatement &print) {
   emitln("Print ");
   indent(IndentationType::DiagBar);
   for (auto &expr: *print.getArgs()) {
@@ -220,16 +230,4 @@ void PrintVisitor::visitPrintStatement(const quack::ast::PrintStatement &print) 
 
 void PrintVisitor::visitMemberAccess(
     const MemberAccess &memberAccess)  {}
-//
-// DEFAULT_DISPATCH(PrintVisitor, LValue)
-// DEFAULT_DISPATCH(PrintVisitor, Statement)
-// DEFAULT_DISPATCH(PrintVisitor, Expression)
-// DEFAULT_DISPATCH(PrintVisitor, Arguments)
-// DEFAULT_DISPATCH(PrintVisitor, Parameters)
-// DEFAULT_DISPATCH(PrintVisitor, Class)
-// DEFAULT_DISPATCH(PrintVisitor, Classes)
-// DEFAULT_DISPATCH(PrintVisitor, Method)
-// DEFAULT_DISPATCH(PrintVisitor, Methods)
-// DEFAULT_DISPATCH(PrintVisitor, MemberAccess)
-
-} // namespace quack::ast
+} // namespace quick::ast

@@ -9,7 +9,7 @@
 #include "EnvironmentBuilder.hpp"
 #include "QTypeDB.hpp"
 
-namespace quack {
+namespace quick {
 namespace sema {
 
 class TypeChecker {
@@ -18,6 +18,6 @@ public:
 };
 
 } // namespace sema
-} // namespace quack
+} // namespace quick
 
 #endif // QUACK_TYPECHECKER_HPP

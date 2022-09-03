@@ -9,7 +9,7 @@
 #include "ExprTypeChecker.hpp"
 #include "QType.hpp"
 
-namespace quack {
+namespace quick {
 
 using namespace ast;
 
@@ -37,5 +37,5 @@ public:
 
 } // namespace sema
 
-} // namespace quack
+} // namespace quick
 #endif // QUACK_ENVIRONMENTBUILDER_HPP

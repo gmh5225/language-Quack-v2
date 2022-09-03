@@ -4,7 +4,7 @@
 
 #include "EnvironmentBuilder.hpp"
 
-namespace quack::sema {
+namespace quick::sema {
 
 /// Compound Stmt Environment Builder:
 /// This function visits every assignment to collect declared variables in this
@@ -56,7 +56,6 @@ bool EnvironmentBuilder::visitIf(const If &ifStmt) {
 bool EnvironmentBuilder::visitStaticAssignment(
     const StaticAssignment &assignment) {
   auto &varDecl = assignment.getDecl();
-  auto &var = varDecl.getVar().getName();
 
   auto rhsType = exprTC.visitExpression(assignment.getRHS());
   assert(rhsType);
@@ -65,11 +64,15 @@ bool EnvironmentBuilder::visitStaticAssignment(
   assert(lhsType);
 
   if (varDecl.isMemberDecl()) {
+    auto &decl = static_cast<const StaticMemberDecl &>(varDecl);
+    auto &var = decl.getObject().getMember().getName();
     auto &memDecl = static_cast<const StaticMemberDecl &>(varDecl);
     auto *t = exprTC.visitExpression(memDecl.getObject());
     assert(t);
-    t->insertMember(type::NamedVar{lhsType, var});
+    t->insertMember(type::QVarDecl{lhsType, var});
   } else {
+    auto &decl = static_cast<const VarDecl &>(varDecl);
+    auto &var = decl.getVar().getName();
     if(!env.back().lookup(var))
       env.back().insert({var, lhsType});
   }
@@ -84,7 +87,7 @@ bool EnvironmentBuilder::visitAssignment(
   auto rhsType = exprTC.visitExpression(assignment.getRHS());
   assert(rhsType);
 
-  if (auto *ident = dynamic_cast<const LValueIdent *>(&assignment.getLHS())) {
+  if (auto *ident = dynamic_cast<const Variable *>(&assignment.getLHS())) {
     auto &var = ident->getVar().getName();
     if (!env.contains(var)) {
       scope.insert({var, rhsType});
@@ -97,7 +100,7 @@ bool EnvironmentBuilder::visitAssignment(
     auto *memberType = objType->lookUpMember(memAccess->getMember().getName());
     if (!memberType) {
       objType->insertMember(
-          type::NamedVar{rhsType, memAccess->getMember().getName()});
+          type::QVarDecl{rhsType, memAccess->getMember().getName()});
     }
   }
 
@@ -110,4 +113,4 @@ sema::Scope &EnvironmentBuilder::update(const CompoundStmt &body, Env &env) {
   return env.back();
 }
 
-} // namespace quack
+} // namespace quick

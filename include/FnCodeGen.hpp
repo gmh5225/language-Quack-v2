@@ -8,41 +8,47 @@
 #include "llvm/IR/IRBuilder.h"
 
 #include "ASTVisitor.hpp"
+#include "Environment.hpp"
 #include "EnvironmentBuilder.hpp"
 #include "ExprTypeChecker.hpp"
 #include "LLVMType.hpp"
-#include "NestedEnvironment.hpp"
 #include "QTypeDB.hpp"
 
-namespace quack {
-
-namespace codegen {
+namespace quick::codegen {
 
 constexpr char MainFn[] = "main";
 
+/// ===-------------------------------------------------------------------=== //
+/// An expression visitor that generates code for a given expression
+/// ===-------------------------------------------------------------------=== //
 class ExprCodeGen : public ast::ASTVisitor<ExprCodeGen, llvm::Value *> {
   llvm::IRBuilder<> &builder;
   llvm::LLVMContext &llvmCntx;
-  LLVMTypeRegistery &typeRegistery;
+  LLVMTypeRegistry &typeRegistery;
   LLVMEnv &llvmEnv;
   type::QTypeDB &tdb;
   sema::ExprTypeChecker exprTC;
 
 public:
-  ExprCodeGen(llvm::IRBuilder<> &b, LLVMTypeRegistery &tr, sema::Env &env,
+  ExprCodeGen(llvm::IRBuilder<> &b, LLVMTypeRegistry &tr, sema::Env &env,
               LLVMEnv &llvmEnv)
       : builder(b), llvmCntx(b.getContext()), typeRegistery(tr),
         llvmEnv(llvmEnv), tdb(type::QTypeDB::get()), exprTC(tdb, env) {}
-
+  llvm::Value *visitTranslationUnit(const TranslationUnit &) = delete;
+  llvm::Value *visitStatement(const Statement &) = delete;
+#define STMT_NODE_HANDLER(NODE) llvm::Value *visit##NODE(const NODE &) = delete;
 #define EXPR_NODE_HANDLER(NODE) llvm::Value *visit##NODE(const NODE &);
 #include "ASTNodes.def"
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// A statement visitor that generates code for every given function/method
+/// ===-------------------------------------------------------------------=== //
 class FnCodeGen : public ASTVisitor<FnCodeGen, bool> {
   llvm::StringRef fnName;
   llvm::Module &module;
   llvm::IRBuilder<> &builder;
-  LLVMTypeRegistery &tr;
+  LLVMTypeRegistry &tr;
   ExprCodeGen exprCG;
   LLVMEnv llvmEnv;
 
@@ -55,20 +61,21 @@ class FnCodeGen : public ASTVisitor<FnCodeGen, bool> {
 
 public:
   FnCodeGen(llvm::IRBuilder<> &builder, llvm::Module &module,
-            const ast::CompoundStmt &cmpStmt,
-            LLVMTypeRegistery &tr, type::QType *parentType = nullptr,
-            llvm::StringRef fnName = MainFn)
+            const ast::CompoundStmt &cmpStmt, LLVMTypeRegistry &tr,
+            type::QType *parentType = nullptr, llvm::StringRef fnName = MainFn)
       : fnName(fnName), module(module), builder(builder), tr(tr),
-        exprCG(builder, tr, env, llvmEnv), fnBody(cmpStmt), tdb(type::QTypeDB::get()),
-        parentType(parentType), exprTC(tdb, env) {}
+        exprCG(builder, tr, env, llvmEnv), fnBody(cmpStmt),
+        tdb(type::QTypeDB::get()), parentType(parentType), exprTC(tdb, env) {}
 
+  bool visitTranslationUnit(const TranslationUnit &) = delete;
+  bool visitExpression(const Expression &) = delete;
+#define EXPR_NODE_HANDLER(NODE) llvm::Value *visit##NODE(const NODE &) = delete;
 #define STMT_NODE_HANDLER(NODE) bool visit##NODE(const ast::NODE &);
 #include "ASTNodes.def"
 
   bool generate();
-  bool isMain() { return fnName == "main"; }
+  bool isMain() { return fnName == MainFn; }
 };
 
-} // namespace codegen
-} // namespace quack
+} // namespace quick::codegen
 #endif // QUACK_FNCODEGEN_HPP

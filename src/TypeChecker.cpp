@@ -3,9 +3,9 @@
 //
 
 #include "TypeChecker.hpp"
-#include "StmtTypeChecker.h"
+#include "StmtVerifier.h"
 
-namespace quack {
+namespace quick {
 namespace sema {
 
 bool TypeChecker::visitTranslationUnit(const ast::TranslationUnit &tu) {
@@ -14,7 +14,7 @@ bool TypeChecker::visitTranslationUnit(const ast::TranslationUnit &tu) {
 
   // Checking main
   auto &tdb = type::QTypeDB::get();
-  StmtTypeChecker stmtTypeChecker(tu.getCompoundStmt(), environment, nullptr,
+  StmtVerifier stmtTypeChecker(tu.getCompoundStmt(), environment, nullptr,
                                   tdb.getIntegerType());
   if (!stmtTypeChecker.isLegal())
     return false;
@@ -23,4 +23,4 @@ bool TypeChecker::visitTranslationUnit(const ast::TranslationUnit &tu) {
 }
 
 } // namespace sema
-} // namespace quack
+} // namespace quick

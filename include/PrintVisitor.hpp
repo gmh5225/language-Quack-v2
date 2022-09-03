@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace quack::ast {
+namespace quick::ast {
 class PrintVisitor : public ASTVisitor<PrintVisitor, void> {
   enum class IndentationType {
     DiagBar, /// " `"
@@ -67,5 +67,5 @@ public:
 
 };
 
-} // namespace quack::ast
+} // namespace quick::ast
 #endif // QUACK_PRINTVISITOR_HPP

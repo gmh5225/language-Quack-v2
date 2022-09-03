@@ -80,7 +80,7 @@ comment     \/\/[^\n]*
 "."        return yy::parser::make_DOT(loc);
 ";"        return yy::parser::make_SEMICOLON (loc);
 ","        return yy::parser::make_COMMA (loc);
-"!"        return yy::parser::make_NEG(loc);
+"!"        return yy::parser::make_NOT(loc);
 {int}      return make_INT (yytext, loc);
 {float}    return make_FLOAT (yytext, loc);
 {this}     return yy::parser::make_THIS(yytext, loc);
@@ -125,7 +125,7 @@ make_FLOAT (const std::string &s, const yy::parser::location_type& loc)
 
 
 void
-quack::parser::ParserDriver::_scanBegin()
+quick::parser::ParserDriver::_scanBegin()
 {
   errno = 0;
   yy_flex_debug = _traceScanning;
@@ -140,7 +140,7 @@ quack::parser::ParserDriver::_scanBegin()
 }
 
 void
-quack::parser::ParserDriver::_scanEnd()
+quick::parser::ParserDriver::_scanEnd()
 {
   fclose (yyin);
 }

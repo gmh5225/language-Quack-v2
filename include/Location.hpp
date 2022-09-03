@@ -8,35 +8,29 @@
 #include <sstream>
 #include <string>
 
-namespace quack::ast {
+namespace quick::frontend {
 
-class Location {
-private:
-  unsigned _lineFrom, _lineTo;
-  unsigned _columnFrom, _columnTo;
-  const std::string _fileName;
-
-public:
-  Location(unsigned lineFrom, unsigned columnFrom, unsigned lineTo, unsigned columnTo, const std::string *filename)
-      : _lineFrom(lineFrom), _lineTo(lineTo), _columnFrom(columnFrom),
-        _columnTo(columnTo), _fileName(filename != nullptr ? *filename : "<filename>") {}
-
-  Location()
-      : _lineFrom(0), _lineTo(0), _columnFrom(0),
-        _columnTo(0) {}
-
-  unsigned getLineFrom() const { return _lineFrom; };
-  unsigned getLineTo() const { return _lineTo; };
-  unsigned getColumnFrom() const { return _columnFrom; };
-  unsigned getColumnTo() const { return _columnTo; };
+struct Location {
+  unsigned l_from, l_to, c_from, c_to, pos, len;
+  Location(unsigned lineFrom, unsigned columnFrom, unsigned lineTo,
+           unsigned columnTo, unsigned pos = 0, unsigned len = 0)
+      : l_from(lineFrom), l_to(lineTo), c_from(columnFrom), c_to(columnTo),
+        pos(pos), len(len) {}
+  Location() : l_from(0), l_to(0), c_from(0), c_to(0), pos(0), len(0) {}
+  bool operator==(const Location &o) const {
+    return (l_from == o.l_from && l_to == o.l_to && c_from == o.c_from &&
+            c_to == o.c_to && pos == o.pos && len == o.len);
+  }
+  bool operator!=(const Location &o) const {
+    return !(*this == o);
+  }
   //    const std::string& getFileName() const    { return _fileName; };
   std::string toString() const {
     std::stringstream ss;
-    ss << _fileName << ":" << _lineFrom << "." << _columnFrom
-       << "-" << _lineTo << "." << _columnTo;
+    ss << l_from << "." << c_from << "-" << l_to << "." << c_to;
     return ss.str();
   }
 };
 
-}// namespace quack::ast
-#endif//QUACK_LOCATION_HPP
+} // namespace quick::frontend
+#endif // QUACK_LOCATION_HPP

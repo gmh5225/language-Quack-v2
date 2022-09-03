@@ -7,7 +7,7 @@
 
 using namespace json;
 
-namespace quack::type {
+namespace quick::type {
 
 /// The following functions register builtin types in the type data base upon
 /// initialization
@@ -19,11 +19,11 @@ static void registerBoolType(QTypeDB &db) {
 
   methodTable.insert(
       {op::ComparisonOperator[op::EQ],
-                      QMethod(boolType, {NamedVar{boolType, "other"}},
+                      QMethod(boolType, {QVarDecl{boolType, "other"}},
                                               boolType, op::ComparisonOperator[op::EQ])});
   methodTable.insert(
       {op::ComparisonOperator[op::NE],
-                      QMethod(boolType, {NamedVar{boolType, "other"}},
+                      QMethod(boolType, {QVarDecl{boolType, "other"}},
                                               boolType, op::ComparisonOperator[op::NE])});
 
   methodTable.insert(
@@ -42,10 +42,10 @@ static void registerNothingType(QTypeDB &db) {
   auto &methodTable = nothingType->getMethods();
 
   methodTable.insert({op::ComparisonOperator[op::EQ],
-                      QMethod(nothingType, {NamedVar{nothingType, "other"}},
+                      QMethod(nothingType, {QVarDecl{nothingType, "other"}},
                              boolType, op::ComparisonOperator[op::EQ])});
   methodTable.insert({op::ComparisonOperator[op::NE],
-                      QMethod(nothingType, {NamedVar{nothingType, "other"}},
+                      QMethod(nothingType, {QVarDecl{nothingType, "other"}},
                              boolType, op::ComparisonOperator[op::NE])});
   methodTable.insert(
       {op::UnaryOperator[op::NOT],
@@ -61,13 +61,13 @@ static void registerIntegerType(QTypeDB &db) {
   // Integer supports all arithmetic operations
   for (const auto &op : op::ArithmeticOperator) {
     methodTable.insert(
-        {op, QMethod(intType, {NamedVar{intType, "other"}}, intType, op)});
+        {op, QMethod(intType, {QVarDecl{intType, "other"}}, intType, op)});
   }
 
   // Integer supports all comparison operations
   for (const auto &op : op::ComparisonOperator) {
     methodTable.insert(
-        {op, QMethod(intType, {NamedVar{intType, "other"}}, boolType, op)});
+        {op, QMethod(intType, {QVarDecl{intType, "other"}}, boolType, op)});
   }
 
   methodTable.insert(
@@ -83,7 +83,7 @@ static void registerFloatType(QTypeDB &db) {
   // Float supports all arithmetic operations
   for (const auto &op : op::ArithmeticOperator) {
     methodTable.insert(
-        {op, QMethod(floatType, {NamedVar{floatType, "other"}}, floatType, op)});
+        {op, QMethod(floatType, {QVarDecl{floatType, "other"}}, floatType, op)});
   }
 
   // Bool type must be registered before int
@@ -92,7 +92,7 @@ static void registerFloatType(QTypeDB &db) {
   // Float supports all comparison operations
   for (const auto &op : op::ComparisonOperator) {
     methodTable.insert(
-        {op, QMethod(floatType, {NamedVar{floatType, "other"}}, boolType, op)});
+        {op, QMethod(floatType, {QVarDecl{floatType, "other"}}, boolType, op)});
   }
 
   methodTable.insert(
@@ -109,15 +109,15 @@ static void registerStringType(QTypeDB &db) {
 
   methodTable.insert(
       {op::ArithmeticOperator[op::ADD],
-                      QMethod(strType, {NamedVar{strType, "other"}},
+                      QMethod(strType, {QVarDecl{strType, "other"}},
                                                strType, op::ArithmeticOperator[op::ADD])});
   methodTable.insert(
       {op::ComparisonOperator[op::EQ],
-                      QMethod(strType, {NamedVar{strType, "other"}},
+                      QMethod(strType, {QVarDecl{strType, "other"}},
                                               boolType, op::ComparisonOperator[op::EQ])});
   methodTable.insert(
       {op::ComparisonOperator[op::NE],
-                      QMethod(strType, {NamedVar{strType, "other"}},
+                      QMethod(strType, {QVarDecl{strType, "other"}},
                                               boolType, op::ComparisonOperator[op::NE])});
 }
 

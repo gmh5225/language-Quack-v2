@@ -5,11 +5,11 @@
 #include "LLVMType.hpp"
 #include "llvm/IR/IRBuilder.h"
 
-namespace quack {
+namespace quick {
 namespace codegen {
 
 using namespace llvm;
-using namespace quack::type;
+using namespace quick::type;
 
 template<typename T>
 static void register_builtin_type(llvm::LLVMContext &cntx, DenseMap<llvm::Type *, LLVMType *> &typemap, StringMap<std::unique_ptr<LLVMType>> &stringmap) {
@@ -18,20 +18,20 @@ static void register_builtin_type(llvm::LLVMContext &cntx, DenseMap<llvm::Type *
   stringmap[t->getName()] = std::move(t);
 }
 
-LLVMTypeRegistery::LLVMTypeRegistery(llvm::LLVMContext &cntx) : cntx(cntx) {
+LLVMTypeRegistry::LLVMTypeRegistry(llvm::LLVMContext &cntx) : cntx(cntx) {
   register_builtin_type<IntType>(cntx, typemap, stringmap);
   register_builtin_type<FloatType>(cntx, typemap, stringmap);
   register_builtin_type<BoolType>(cntx, typemap, stringmap);
 }
 
-LLVMType *LLVMTypeRegistery::get(type::QType *qtype) {
+LLVMType *LLVMTypeRegistry::get(type::QType *qtype) {
   auto it = this->stringmap.find(qtype->getName());
   if (it == this->stringmap.end())
     return nullptr;
   return it->second.get();
 }
 
-LLVMType *LLVMTypeRegistery::get(llvm::Type *type) {
+LLVMType *LLVMTypeRegistry::get(llvm::Type *type) {
   auto it = this->typemap.find(type);
   if (it == this->typemap.end())
     return nullptr;
@@ -223,4 +223,4 @@ llvm::Value *Primitive::alloc(IRBuilder<> &b) {
 }
 
 } // namespace codegen
-} // namespace quack
+} // namespace quick

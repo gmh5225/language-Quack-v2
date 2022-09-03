@@ -7,7 +7,7 @@
 
 using namespace llvm;
 
-namespace quack {
+namespace quick {
 namespace type {
 
 using namespace json;
@@ -72,7 +72,7 @@ std::unique_ptr<JSONNode> QType::toJson() {
   return t;
 }
 
-bool QType::insertMember(const NamedVar &namedVar) {
+bool QType::insertMember(const QVarDecl &namedVar) {
   if (members.count(namedVar.name) != 0)
     return false;
 
@@ -81,7 +81,7 @@ bool QType::insertMember(const NamedVar &namedVar) {
 }
 
 bool QType::insertMethod(const std::string &mName, QType *retType,
-                         llvm::ArrayRef<NamedVar> args) {
+                         llvm::ArrayRef<QVarDecl> args) {
   if (methods.count(mName) != 0)
     return false;
 
@@ -148,4 +148,4 @@ bool QType::isDescendentOf(const QType *other) const {
 // };
 
 } // namespace type
-} // namespace quack
+} // namespace quick

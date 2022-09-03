@@ -1,6 +1,7 @@
 /// Defines a visit method for the abstract nodes of the AST
 #ifdef ABSTRACT_NODE_HANDLER
 #define AST_NODES                                                              \
+  ABSTRACT_NODE_HANDLER(Decl)                                                  \
   ABSTRACT_NODE_HANDLER(LValue)                                                \
   ABSTRACT_NODE_HANDLER(Statement)                                             \
   ABSTRACT_NODE_HANDLER(Expression)
@@ -22,7 +23,7 @@ AST_NODES
   EXPR_NODE_HANDLER(FloatLiteral)                                              \
   EXPR_NODE_HANDLER(BoolLiteral)                                               \
   EXPR_NODE_HANDLER(StringLiteral)                                             \
-  EXPR_NODE_HANDLER(LValueIdent)                                               \
+  EXPR_NODE_HANDLER(Variable)                                                  \
   EXPR_NODE_HANDLER(BinaryOperator)                                            \
   EXPR_NODE_HANDLER(UnaryOperator)                                             \
   EXPR_NODE_HANDLER(Call)                                                      \
@@ -56,6 +57,7 @@ AST_NODES
   NODE_HANDLER(TranslationUnit)                                                \
   NODE_HANDLER(Identifier)                                                     \
   NODE_HANDLER(VarDecl)                                                        \
+  NODE_HANDLER(StaticMemberDecl)                                               \
   NODE_HANDLER(Arguments)                                                      \
   NODE_HANDLER(Parameters)                                                     \
   NODE_HANDLER(Class)                                                          \

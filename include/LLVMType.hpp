@@ -16,13 +16,16 @@
 
 #include "QTypeDB.hpp"
 
-namespace quack {
+namespace quick {
 namespace codegen {
 
+/// ===-------------------------------------------------------------------=== //
+/// LLVMType - a class encapsulating a Quick type in llvm
+/// ===-------------------------------------------------------------------=== //
 class LLVMType {
 protected:
   llvm::LLVMContext &cntx;
-  llvm::SmallVector<llvm::Function *, 0> methods;
+  llvm::SmallVector<llvm::Function *, 0> methods; // method table
 
 public:
   explicit LLVMType(llvm::LLVMContext &cntx) : cntx(cntx) {}
@@ -37,6 +40,9 @@ public:
   virtual ~LLVMType() = default;
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Primitive - a primitive type doesn't have a vtable and dynamic operations
+/// ===-------------------------------------------------------------------=== //
 class Primitive : public LLVMType {
 protected:
   llvm::Type *t;
@@ -49,6 +55,9 @@ public:
                            llvm::ArrayRef<llvm::Value *> args) override;
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Integer primitive
+/// ===-------------------------------------------------------------------=== //
 class IntType : public Primitive {
 public:
   explicit IntType(llvm::LLVMContext &cntx)
@@ -59,6 +68,9 @@ public:
                         llvm::ArrayRef<llvm::Value *> args) override;
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Float primitive
+/// ===-------------------------------------------------------------------=== //
 class FloatType : public Primitive {
 public:
   explicit FloatType(llvm::LLVMContext &cntx)
@@ -69,6 +81,9 @@ public:
                         llvm::ArrayRef<llvm::Value *> args) override;
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Boolean primitive
+/// ===-------------------------------------------------------------------=== //
 class BoolType : public Primitive {
 public:
   explicit BoolType(llvm::LLVMContext &cntx)
@@ -79,6 +94,9 @@ public:
                         llvm::ArrayRef<llvm::Value *> args) override;
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// ComplexType - has zero or more members and zero or more methods
+/// ===-------------------------------------------------------------------=== //
 class ComplexType : public LLVMType {
   llvm::SmallVector<llvm::Type *, 1> members;
   llvm::StructType *vtable;
@@ -99,19 +117,22 @@ public:
                            llvm::ArrayRef<llvm::Value *> args) override;
 };
 
-class LLVMTypeRegistery {
+/// ===-------------------------------------------------------------------=== //
+/// LLVMTypeRegisterty - mapping from Quick type and llvm type to LLVMType
+/// ===-------------------------------------------------------------------=== //
+class LLVMTypeRegistry {
   llvm::LLVMContext &cntx;
   llvm::StringMap<std::unique_ptr<LLVMType>> stringmap;
   llvm::DenseMap<llvm::Type *, LLVMType *> typemap;
 
 public:
-  explicit LLVMTypeRegistery(llvm::LLVMContext &cntx);
-  LLVMTypeRegistery(const LLVMTypeRegistery &) = delete;
-  LLVMTypeRegistery &operator=(const LLVMTypeRegistery &) = delete;
+  explicit LLVMTypeRegistry(llvm::LLVMContext &cntx);
+  LLVMTypeRegistry(const LLVMTypeRegistry &) = delete;
+  LLVMTypeRegistry &operator=(const LLVMTypeRegistry &) = delete;
   LLVMType *get(type::QType *qtype);
   LLVMType *get(llvm::Type *type);
 };
 
 } // namespace codegen
-} // namespace quack
+} // namespace quick
 #endif // QUACK_LLVMTYPE_HPP

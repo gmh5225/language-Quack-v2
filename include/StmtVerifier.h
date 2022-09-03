@@ -7,10 +7,14 @@
 
 #include "EnvironmentBuilder.hpp"
 
-namespace quack {
+namespace quick {
 namespace sema {
 
-class StmtTypeChecker : public ASTVisitor<StmtTypeChecker, bool> {
+/// ===-------------------------------------------------------------------=== //
+/// StmtVerifier - A visitor that visits every statement and verifies
+/// their legality
+/// ===-------------------------------------------------------------------=== //
+class StmtVerifier : public ASTVisitor<StmtVerifier, bool> {
   const CompoundStmt &cmpStmt;
   sema::Env &env;
   type::QTypeDB &tdb;
@@ -21,12 +25,15 @@ class StmtTypeChecker : public ASTVisitor<StmtTypeChecker, bool> {
   sema::ExprTypeChecker exprTC;
 
 public:
-  StmtTypeChecker(const CompoundStmt &cmpStmt, sema::Env &env,
+  StmtVerifier(const CompoundStmt &cmpStmt, sema::Env &env,
                   type::QType *parentType = nullptr,
                   type::QType *returnType = nullptr, bool isConstructor = false)
       : cmpStmt(cmpStmt), env(env), tdb(type::QTypeDB::get()), parentType(parentType),
         returnType(returnType), isConstructor(isConstructor), exprTC(tdb, env) {}
 
+  // only visits statements
+  bool visitExpression(const ast::Expression&) = delete;
+#define EXPR_NODE_HANDLER(NODE) bool visit##NODE(const ast::NODE &) = delete;
 #define STMT_NODE_HANDLER(NODE) bool visit##NODE(const ast::NODE &);
 #include "ASTNodes.def"
 
@@ -34,5 +41,5 @@ public:
 };
 
 } // namespace sema
-} // namespace quack
+} // namespace quick
 #endif // QUACK_FNTYPECHECKER_H

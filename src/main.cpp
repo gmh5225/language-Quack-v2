@@ -1,6 +1,7 @@
 #include "FnCodeGen.hpp"
 #include "ParserDriver.hpp"
 #include "PrintVisitor.hpp"
+#include "QuickTokenizer.hpp"
 #include "TypeChecker.hpp"
 #include "Utils.hpp"
 
@@ -31,6 +32,9 @@ cl::opt<std::string> Filename(cl::Positional, cl::desc("<input-file>"),
                               cl::NumOccurrencesFlag::Required);
 namespace llvm::orc {
 
+/// ===-------------------------------------------------------------------=== //
+/// A Simple just-in-time compilation engine, copied from Kaleidoscope tutorial
+/// ===-------------------------------------------------------------------=== //
 class JITEngine {
 private:
   ExecutionSession ES;
@@ -85,17 +89,20 @@ public:
 
 } // namespace llvm::orc
 
-namespace quack::compiler {
+namespace quick::compiler {
 
-class CompilerDriver {
+/// ===-------------------------------------------------------------------=== //
+/// A Driver class for interfacing with different stages of the compiler
+/// ===-------------------------------------------------------------------=== //
+class Driver {
   ExitOnError ExitOnErr;
   std::unique_ptr<llvm::orc::JITEngine> engine;
 
 public:
-  CompilerDriver() : engine(ExitOnErr(orc::JITEngine::Create())) {}
+  Driver() : engine(ExitOnErr(orc::JITEngine::Create())) {}
 
   static bool TypeCheck(const TranslationUnit &root) {
-    quack::sema::TypeChecker tc;
+    quick::sema::TypeChecker tc;
     return tc.visitTranslationUnit(root);
   }
 
@@ -107,8 +114,8 @@ public:
 
     auto module = std::make_unique<Module>(name, cntx);
     IRBuilder<> builder(cntx);
-    quack::codegen::LLVMTypeRegistery tr(cntx);
-    quack::codegen::FnCodeGen fnCodeGen(builder, *module,
+    quick::codegen::LLVMTypeRegistry tr(cntx);
+    quick::codegen::FnCodeGen fnCodeGen(builder, *module,
                                         root.getCompoundStmt(), tr);
     if (!fnCodeGen.generate())
       return nullptr;
@@ -127,12 +134,12 @@ public:
   }
 };
 
-} // namespace quack::compiler
+} // namespace quick::compiler
 
 int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "Quick JIT.\n");
-  quack::parser::ParserDriver drv;
+  quick::parser::ParserDriver drv;
 
   int programError = drv.parse(Filename);
   if (programError)
@@ -147,7 +154,7 @@ int main(int argc, char **argv) {
   }
 
   LLVMContext cntx;
-  auto module = quack::compiler::CompilerDriver::CodeGen(root, cntx, Filename);
+  auto module = quick::compiler::Driver::CodeGen(root, cntx, Filename);
   if (!module)
     std::exit(1);
 
@@ -159,7 +166,7 @@ int main(int argc, char **argv) {
   InitializeNativeTarget();
   InitializeNativeTargetAsmPrinter();
   InitializeNativeTargetAsmParser();
-  quack::compiler::CompilerDriver Compiler;
+  quick::compiler::Driver Compiler;
   int res = Compiler.JIT(std::move(module));
   std::exit(res);
 }

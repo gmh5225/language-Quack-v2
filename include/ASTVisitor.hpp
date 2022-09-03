@@ -7,7 +7,7 @@
 
 #include "AST.hpp"
 
-namespace quack::ast {
+namespace quick::ast {
 
 /// ASTVisitor interface declares static dispatch methods for visiting each node
 /// of the AST
@@ -27,13 +27,26 @@ public:
   return getDerived()->visit##NODE(static_cast<const NODE &>((OBJ)),           \
                                    std::forward<Args>(args)...)
 
+
+
   /// Abstract node handlers that dispatch to concrete subtype in the AST
   RetType visitLValue(const LValue &lValue, Args &&...args) {
     switch (lValue.getKind()) {
-    case LValue::Kind::LValueIdent:
-      DISPATCH(LValueIdent, lValue);
+    case LValue::Kind::Variable:
+      DISPATCH(Variable, lValue);
     case LValue::Kind::MemberAccess:
       DISPATCH(MemberAccess, lValue);
+    default:
+      return RetType();
+    }
+  }
+
+  RetType visitDecl(const Decl &decl, Args &&...args) {
+    switch (decl.getKind()) {
+    case Decl::Kind::Var:
+      DISPATCH(VarDecl, decl);
+    case Decl::Kind::Member:
+      DISPATCH(StaticMemberDecl, decl);
     default:
       return RetType();
     }
@@ -85,6 +98,6 @@ public:
   }
 }; // ASTVisitor
 
-} // namespace quack::ast
+} // namespace quick::ast
 
 #endif // QUACK_ASTVISITOR_HPP

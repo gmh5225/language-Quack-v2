@@ -8,9 +8,11 @@
 #include "QType.hpp"
 #include "LLVMType.hpp"
 
-namespace quack::type {
+namespace quick::type {
 
-/// All Quack types are registered in this singleton
+/// ===-------------------------------------------------------------------=== //
+/// All Quick types are registered in this singleton
+/// ===-------------------------------------------------------------------=== //
 class QTypeDB : public std::unordered_map<std::string, std::unique_ptr<QType>> {
   QTypeDB();
 
@@ -39,5 +41,5 @@ public:
   std::unique_ptr<json::JSONNode> toJson();
 };
 
-} // namespace quack::type
+} // namespace quick::type
 #endif // QUACK_QTYPEDB_HPP

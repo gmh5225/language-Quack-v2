@@ -13,11 +13,14 @@
 
 #include "AST.hpp"
 
-namespace quack {
+namespace quick {
 
+void logError(std::fstream &file, const frontend::Location &loc,
+              const std::string &message,
+              const std::string &fname = "<unknown-file>");
 void logError(const ast::ASTNode &, const std::string &message);
 void logError(const std::string &message);
 
-} // namespace quack
+} // namespace quick
 
 #endif // QUACK_UTILS_HPP

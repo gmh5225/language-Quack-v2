@@ -15,12 +15,12 @@
   #include "AST.hpp"
   #include "Parser.hpp"
 
-  namespace quack::parser
+  namespace quick::parser
   {
     class ParserDriver;
   }
 
-  using namespace quack::ast;
+  using namespace quick::ast;
 
   // Some aliasing to improve code readability
 
@@ -28,7 +28,7 @@
 }
 
 // The parsing context.
-%param { quack::parser::ParserDriver& drv }
+%param { quick::parser::ParserDriver& drv }
 %locations
 
 %define parse.trace
@@ -40,7 +40,7 @@
 
   // Creates a location object
   #define loc(BEGIN_TOK, END_TOK) \
-    Location(BEGIN_TOK.begin.line, BEGIN_TOK.begin.column, END_TOK.end.line, END_TOK.end.column, BEGIN_TOK.begin.filename)
+    Location(BEGIN_TOK.begin.line, BEGIN_TOK.begin.column, END_TOK.end.line, END_TOK.end.column)
 }
 
 %define api.token.prefix {TOK_}
@@ -57,7 +57,7 @@
   MOREEQ   ">="
   EQUAL    "=="
   NOT_EQUAL "!="
-  NEG     "!"
+  NOT     "!"
   COLON   ":"
   DOT     "."
   SEMICOLON ";"
@@ -91,8 +91,9 @@
 %type <ptr<Statement>> statement
 %type <ptr<Identifier>> identifier
 %type <ptr<CompoundStmt>> compoundStmt
-%type <ptr<Expression>> expression
+%type <ptr<Decl>> decl
 %type <ptr<VarDecl>> varDecl
+%type <ptr<Variable>> variableExpression
 %type <ptr<StaticMemberDecl>> memberDecl
 %type <ptr<Assignment>> assignment
 %type <ptr<StaticAssignment>> staticAssignment
@@ -100,7 +101,16 @@
 %type <ptr<If>> ifStmt
 %type <ptr<While>> whileStmt
 %type <ptr<CompoundStmt>> optElseIf
-%type <BinaryOperator::Operator> binaryOperator
+%type <BinaryOperator::Operator> relationalOperator
+%type <ptr<Expression>> primaryExpression
+%type <ptr<Expression>> unaryExpression
+%type <ptr<MemberAccess>> memberAccessExpression
+%type <ptr<Expression>> additiveExpression
+%type <ptr<Expression>> multiplicativeExpression
+%type <ptr<Expression>> callExpression
+%type <ptr<Expression>> expression
+%type <ptr<Expression>> relationalExpression
+%type <ptr<LValue>> lvalueExpression
 %type <UnaryOperator::Operator> unaryOperator
 %type <ptr<Arguments>> args
 %type <ptr<Arguments>> argsNonEmpty
@@ -112,16 +122,6 @@
 %type <ptr<Class>> class
 %type <ptr<Classes>> classes
 %type <ptr<Classes>> classesNonEmpty
-%type <ptr<Call>> call
-%type <ptr<MemberAccess>> memberAccess
-
-// Precedence
-%left "="
-%left "."
-%left "<" ">" "<=" ">=" "=="
-%left "+" "-"
-%left "*" "/" "%"
-%left UMINUS
 
 %%
 
@@ -145,25 +145,23 @@ compoundStmt: %empty                  { $$ = std::make_unique<CompoundStmt>(loc(
 identifier: IDENT                   { $$ = std::make_unique<Identifier>(loc(@1, @1), $1); }
     ;
 
-memberAccess: expression "." identifier
-                                    { $$ = std::make_unique<MemberAccess>(loc(@1, @3), std::move($3), std::move($1)); }
-    ;
-
-varDecl: identifier ":" identifier
+varDecl: variableExpression ":" identifier
                                     { $$ = std::make_unique<VarDecl>(loc(@1, @3), std::move($1), std::move($3)); }
     ;
 
-memberDecl: memberAccess ":" identifier
+memberDecl: memberAccessExpression ":" identifier
                                     { $$ = std::make_unique<StaticMemberDecl>(loc(@1, @3), std::move($1), std::move($3)); }
     ;
 
-staticAssignment: varDecl "=" expression  { $$ = std::make_unique<StaticAssignment>(loc(@1, @3), std::move($1), std::move($3)); }
-    | memberDecl "=" expression           { $$ = std::make_unique<StaticAssignment>(loc(@1, @3), std::move($1), std::move($3)); }
+decl: varDecl                       { $$ = std::move($1); }
+    | memberDecl                    { $$ = std::move($1); }
     ;
 
-assignment: memberAccess "=" expression   { $$ = std::make_unique<Assignment>(loc(@1, @3),std::move($1), std::move($3)); }
-    | identifier "=" expression  { auto lValueIdent = std::make_unique<LValueIdent>(loc(@1, @1), std::move($1));
-                                   $$ = std::make_unique<Assignment>(loc(@1, @3),std::move(lValueIdent), std::move($3)); }
+staticAssignment: decl "=" expression  { $$ = std::make_unique<StaticAssignment>(loc(@1, @3), std::move($1), std::move($3)); }
+    ;
+
+assignment: memberAccessExpression "=" expression   { $$ = std::make_unique<Assignment>(loc(@1, @3),std::move($1), std::move($3)); }
+    | variableExpression "=" expression  { $$ = std::make_unique<Assignment>(loc(@1, @3),std::move($1), std::move($3)); }
     ;
 
 returnStmt: RETURN expression  { $$ = std::make_unique<Return>(loc(@1, @2), std::move($2)); }
@@ -198,25 +196,13 @@ statement: ";"                      { ; }
     | PRINT args ";"                { $$ = std::make_unique<PrintStatement>(loc(@1, @3), std::move($2)); }
     ;
 
-binaryOperator: "+"                 { $$ = BinaryOperator::Operator::Plus; }
-    | "-"                           { $$ = BinaryOperator::Operator::Minus; }
-    | "*"                           { $$ = BinaryOperator::Operator::Times; }
-    | "/"                           { $$ = BinaryOperator::Operator::Divide; }
-    | "%"                           { $$ = BinaryOperator::Operator::Modulo; }
-    | "<"                           { $$ = BinaryOperator::Operator::Less; }
+relationalOperator:
+      "<"                           { $$ = BinaryOperator::Operator::Less; }
     | ">"                           { $$ = BinaryOperator::Operator::Greater; }
     | "<="                          { $$ = BinaryOperator::Operator::LessEqual; }
     | ">="                          { $$ = BinaryOperator::Operator::GreaterEqual; }
     | "=="                          { $$ = BinaryOperator::Operator::Equals; }
     | "!="                          { $$ = BinaryOperator::Operator::NotEquals; }
-    ;
-
-unaryOperator: "!"                  { $$ = UnaryOperator::Operator::Not; }
-    | "-"                           { $$ = UnaryOperator::Operator::Neg; }
-    ;
-
-call: expression "." identifier "(" args ")" { $$ = std::make_unique<Call>(loc(@1, @6), std::move($1), std::move($3),
-                                                          std::move($5)); }
     ;
 
 args: argsNonEmpty                         { $$ = std::move($1); }
@@ -287,20 +273,64 @@ classesNonEmpty : class                   { $$ = std::make_unique<Classes>(loc(@
     | classesNonEmpty "," class           { $1->push_back(std::move($3)); $$ = std::move($1); }
     ;
 
-expression:
+variableExpression:
+      identifier                           { $$ = std::make_unique<Variable>(loc(@1, @1), std::move($1)); }
+    ;
+
+memberAccessExpression:
+     variableExpression "." identifier     { $$ = std::make_unique<MemberAccess>(loc(@1, @3), std::move($3), std::move($1)); }
+    | memberAccessExpression "." identifier     { $$ = std::make_unique<MemberAccess>(loc(@1, @3), std::move($3), std::move($1)); }
+    ;
+
+lvalueExpression:
+      variableExpression                   { $$ = std::move($1); }
+    | memberAccessExpression               { $$ = std::move($1); }
+    ;
+
+primaryExpression:
       INT                                  { $$ = std::make_unique<IntegerLiteral>(loc(@1, @1), $1); }
     | FLOAT                                { $$ = std::make_unique<FloatLiteral>(loc(@1, @1), $1); }
     | BOOL                                 { $$ = std::make_unique<BoolLiteral>(loc(@1, @1), $1); }
     | STRING_LIT                           { $$ = std::make_unique<StringLiteral>(loc(@1, @1), $1); }
-    | THIS                                 { $$ = std::make_unique<LValueIdent>(loc(@1, @1), std::make_unique<Identifier>(loc(@1, @1), "this")); }
-    | identifier                           { $$ = std::make_unique<LValueIdent>(loc(@1, @1), std::move($1)); }
-    | "(" expression ")"                   { $$ = std::move($2); }
-    | call                                 { $$ = std::move($1); }
-    | memberAccess                         { $$ = std::move($1); }
-    | unaryOperator expression %prec UMINUS { $$ = std::make_unique<UnaryOperator>(loc(@1, @2), $1, std::move($2)); }
-    | expression binaryOperator expression { $$ = std::make_unique<BinaryOperator>(loc(@1, @3), $2, std::move($1),
-                                                          std::move($3)); }
+    | lvalueExpression                     { $$ = std::move($1); }
     ;
+
+callExpression:
+      primaryExpression                    { $$ = std::move($1); }
+    | primaryExpression "(" args ")"       { $$ = std::make_unique<Call>(loc(@1, @4), std::move($1), std::move($3)); }
+    ;
+
+unaryOperator: "!"                  { $$ = UnaryOperator::Operator::Not; }
+    | "-"                           { $$ = UnaryOperator::Operator::Neg; }
+    ;
+
+unaryExpression:
+      callExpression                    { $$ = std::move($1); }
+    | unaryOperator callExpression      { $$ = std::make_unique<UnaryOperator>(loc(@1, @2), $1, std::move($2)); }
+    ;
+
+multiplicativeExpression:
+      unaryExpression                                    { $$ = std::move($1); }
+    | multiplicativeExpression "*" unaryExpression       { $$ = std::make_unique<BinaryOperator>(loc(@1, @3), BinaryOperator::Operator::Times, std::move($1),std::move($3)); }
+    | multiplicativeExpression "/" unaryExpression       { $$ = std::make_unique<BinaryOperator>(loc(@1, @3), BinaryOperator::Operator::Divide, std::move($1),std::move($3)); }
+    | multiplicativeExpression "%" unaryExpression       { $$ = std::make_unique<BinaryOperator>(loc(@1, @3), BinaryOperator::Operator::Modulo, std::move($1),std::move($3)); }
+    ;
+
+additiveExpression:
+      multiplicativeExpression                              { $$ = std::move($1); }
+    | additiveExpression "+" multiplicativeExpression       { $$ = std::make_unique<BinaryOperator>(loc(@1, @3), BinaryOperator::Operator::Plus, std::move($1),std::move($3)); }
+    | additiveExpression "-" multiplicativeExpression       { $$ = std::make_unique<BinaryOperator>(loc(@1, @3), BinaryOperator::Operator::Minus, std::move($1),std::move($3)); }
+    ;
+
+relationalExpression:
+      additiveExpression                                          { $$ = std::move($1); }
+    | relationalExpression relationalOperator additiveExpression  { $$ = std::make_unique<BinaryOperator>(loc(@1, @3), $2, std::move($1),std::move($3)); }
+    ;
+
+expression: relationalExpression                      { $$ = std::move($1); }
+    | "(" expression ")"                              { $$ = std::move($2); }
+    ;
+
 %%
 
 void yy::parser::error (const location_type& l, const std::string& m) {

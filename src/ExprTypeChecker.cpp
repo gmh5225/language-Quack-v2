@@ -6,7 +6,7 @@
 
 using namespace llvm;
 
-namespace quack {
+namespace quick {
 namespace sema {
 
 type::QType *ExprTypeChecker::visitIntegerLiteral(const IntegerLiteral &) {
@@ -122,7 +122,7 @@ type::QType *ExprTypeChecker::visitMemberAccess(const MemberAccess &) {
   return nullptr;
 }
 
-type::QType *ExprTypeChecker::visitLValueIdent(const LValueIdent &lvalue) {
+type::QType *ExprTypeChecker::visitVariable(const Variable &lvalue) {
   if (auto t = env.lookup(lvalue.getVar().getName()))
     return t;
   else {
@@ -133,4 +133,4 @@ type::QType *ExprTypeChecker::visitLValueIdent(const LValueIdent &lvalue) {
 }
 
 } // namespace sema
-} // namespace quack
+} // namespace quick

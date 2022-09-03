@@ -7,7 +7,7 @@
 
 #include "QType.hpp"
 
-namespace quack {
+namespace quick {
 
 using namespace llvm;
 
@@ -21,8 +21,6 @@ public:
   LocalEnvironment(LocalEnvironment &&) = default;
   LocalEnvironment &operator=(LocalEnvironment &&) = default;
   LocalEnvironment copy() { return *this; }
-  /// Intersection with another scope
-//  LocalEnvironment And(const LocalEnvironment &);
 };
 
 /// A nested environment, which is a vector of scopes(local environments)
@@ -89,7 +87,6 @@ bool NestedEnvironment<T>::mergeScope(const LocalEnvironment<T> &s) {
 }
 
 namespace sema {
-
 using Env = NestedEnvironment<type::QType *>;
 using Scope = LocalEnvironment<type::QType *>;
 Scope And(const Scope &first, const Scope &other);
@@ -100,5 +97,5 @@ using LLVMEnv = NestedEnvironment<llvm::Value *>;
 using LLVMScope = LocalEnvironment<llvm::Value *>;
 } // namespace codegen
 
-} // namespace quack
+} // namespace quick
 #endif // QUACK_NESTEDENVIRONMENT_HPP

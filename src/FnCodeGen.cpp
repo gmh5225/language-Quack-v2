@@ -7,7 +7,7 @@
 
 using namespace llvm;
 
-namespace quack::codegen {
+namespace quick::codegen {
 
 static llvm::Value *getNoOp(llvm::Module *module, llvm::LLVMContext &cntx) {
   auto *ftype = llvm::FunctionType::get(llvm::Type::getVoidTy(cntx), false);
@@ -30,18 +30,18 @@ static inline llvm::Value *visitIntOrFloat(IRBuilder<> &builder,
 llvm::Value *
 ExprCodeGen::visitIntegerLiteral(const ast::IntegerLiteral &integer) {
   return visitIntOrFloat(builder, builder.getInt64Ty(),
-                         builder.getInt64(integer.getInteger()));
+                         builder.getInt64(integer.get()));
 }
 
 llvm::Value *ExprCodeGen::visitFloatLiteral(const ast::FloatLiteral &floating) {
   return visitIntOrFloat(
       builder, builder.getDoubleTy(),
-      ConstantFP::get(llvm::Type::getDoubleTy(llvmCntx), floating.getFloat()));
+      ConstantFP::get(llvm::Type::getDoubleTy(llvmCntx), floating.get()));
 }
 
 llvm::Value *ExprCodeGen::visitBoolLiteral(const ast::BoolLiteral &boolean) {
   return visitIntOrFloat(builder, builder.getInt64Ty(),
-                         builder.getInt64(boolean.getBool()));
+                         builder.getInt64(boolean.get()));
 }
 
 llvm::Value *ExprCodeGen::visitStringLiteral(const ast::StringLiteral &) {
@@ -50,7 +50,7 @@ llvm::Value *ExprCodeGen::visitStringLiteral(const ast::StringLiteral &) {
 
 llvm::Value *ExprCodeGen::visitCall(const ast::Call &) { return nullptr; }
 
-llvm::Value *ExprCodeGen::visitLValueIdent(const ast::LValueIdent &lvalue) {
+llvm::Value *ExprCodeGen::visitVariable(const ast::Variable &lvalue) {
   auto val = llvmEnv.lookup(lvalue.getVar().getName());
   assert(val && "value must exist in the environment");
   auto load = builder.CreateLoad(val);
@@ -151,7 +151,7 @@ bool FnCodeGen::visitCompoundStmt(const CompoundStmt &compoundStmt) {
 
 // bool FnCodeGen::visitVarDecl(const VarDecl &varDecl) { return false; }
 //
-// bool FnCodeGen::visitLValueIdent(const LValueIdent &lValue) { return false; }
+// bool FnCodeGen::visitLValueIdent(const Variable &lValue) { return false; }
 
 /// Sometimes if statements produce blocks "if.cont" that might be empty, and
 /// have no predecessors(if body of if has return stmt).
@@ -321,9 +321,9 @@ bool FnCodeGen::visitAssignment(const Assignment &assignment) {
   if (!rhsLLVMVal)
     return false;
 
-  if (assignment.getLHS().getKind() == LValue::Kind::LValueIdent) {
+  if (assignment.getLHS().getKind() == LValue::Kind::Variable) {
     auto *llvmType = tr.get(rhsLLVMVal->getType());
-    auto &lvalue = static_cast<const LValueIdent &>(assignment.getLHS());
+    auto &lvalue = static_cast<const Variable &>(assignment.getLHS());
     auto &var = lvalue.getVar().getName();
     if (auto *storage = llvmEnv.lookup(var)) {
       llvmType->instantiate(builder, storage, {rhsLLVMVal});
@@ -345,12 +345,13 @@ bool FnCodeGen::visitStaticAssignment(const StaticAssignment &assignment) {
   if (!rhsLLVMVal)
     return false;
 
-  auto &var = assignment.getDecl().getVar().getName();
   auto &type = assignment.getDecl().getType().getName();
   auto *qtype = tdb.getType(type);
   assert(qtype && "qtype must exist at this point");
 
   if (!assignment.getDecl().isMemberDecl()) {
+    auto &decl = static_cast<const StaticMemberDecl &>(assignment.getDecl());
+    auto &var = decl.getObject().getMember().getName();
     auto *llvmType = tr.get(qtype);
     assert(llvmType && "qtype must exist in tr");
     assert(llvmEnv.back().count(var) == 0 && "must have been type checked");
@@ -481,4 +482,4 @@ bool FnCodeGen::generate() {
 //
 // bool FnCodeGen::visitIdentifier(const ast::Identifier &) { return false; }
 
-} // namespace quack::codegen
+} // namespace quick::codegen

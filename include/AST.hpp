@@ -9,33 +9,40 @@
 #include <utility>
 #include <vector>
 
-namespace quack {
+namespace quick::ast {
 
-namespace ast {
+using namespace frontend;
 
-/// Abstract node class, the base for every other AST node
+/// ===-------------------------------------------------------------------=== //
+/// ASTNode - Abstract node class, the base for every other AST node
+/// ===-------------------------------------------------------------------=== //
 class ASTNode {
   const Location _loc;
 
 protected:
-  explicit ASTNode(Location loc) : _loc(std::move(loc)) {}
+  explicit ASTNode(Location loc) : _loc(loc) {}
 
 public:
   const Location &getLocation() const { return _loc; }
+  template <typename T> inline const T *as_a(const T &astNode) const {
+    return dynamic_cast<const T *>(&astNode);
+  }
   virtual ~ASTNode() = default;
 };
 
 class CompoundStmt; // Forward ref
 class Classes;
 
-/// A TranslationUnit is the root of an AST
+/// ===-------------------------------------------------------------------=== //
+/// TranslationUnit - Root node of the AST
+/// ===-------------------------------------------------------------------=== //
 class TranslationUnit : public ASTNode {
   std::unique_ptr<Classes> _classes;
   std::unique_ptr<CompoundStmt> _compoundStmt;
 
 public:
-  explicit TranslationUnit(Location loc, std::unique_ptr<Classes> classes,
-                           std::unique_ptr<CompoundStmt> compoundStmt)
+  TranslationUnit(Location loc, std::unique_ptr<Classes> classes,
+                  std::unique_ptr<CompoundStmt> compoundStmt)
       : ASTNode(std::move(loc)), _classes(std::move(classes)),
         _compoundStmt(std::move(compoundStmt)) {}
 
@@ -43,6 +50,9 @@ public:
   const Classes &getClasses() const { return *_classes; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Statement - Abstract statement node
+/// ===-------------------------------------------------------------------=== //
 class Statement : public ASTNode {
 public:
   enum class Kind {
@@ -55,7 +65,7 @@ public:
     Print
   };
 
-  Kind getKind() const { return _kind; }
+  inline Kind getKind() const { return _kind; }
 
 protected:
   Statement(Location loc, Kind kind) : ASTNode(std::move(loc)), _kind(kind) {}
@@ -64,16 +74,23 @@ private:
   Kind _kind;
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Sequence, basically a list of AST objects
+/// ===-------------------------------------------------------------------=== //
 template <typename T> using Sequence = std::vector<std::unique_ptr<T>>;
 
-/// A block of statements
+/// ===-------------------------------------------------------------------=== //
+/// CompoundStmt - A block of statements
+/// ===-------------------------------------------------------------------=== //
 class CompoundStmt : public Sequence<Statement>, public ASTNode {
 public:
   explicit CompoundStmt(const Location &loc) : ASTNode(loc) {}
   bool hasReturn() const;
 };
 
-/// An Expression is either and LValue (has storage) or RValue
+/// ===-------------------------------------------------------------------=== //
+/// Expression - Abstract expression node class
+/// ===-------------------------------------------------------------------=== //
 class Expression : public ASTNode {
 public:
   enum class Kind {
@@ -87,46 +104,51 @@ public:
     StringLiteral
   };
 
-  Kind getKind() const { return _kind; }
-  bool isLValue() const { return _kind == Kind::LValue; }
+  inline Kind getKind() const { return _kind; }
 
 protected:
-  explicit Expression(Location loc, Kind kind)
-      : ASTNode(std::move(loc)), _kind(kind) {}
+  Expression(Location loc, Kind kind) : ASTNode(std::move(loc)), _kind(kind) {}
 
 private:
   Kind _kind;
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// ValueStmt - A statement with an expression
+/// ===-------------------------------------------------------------------=== //
 class ValueStmt : public Statement {
   std::unique_ptr<Expression> _expr;
 
 public:
   explicit ValueStmt(Location loc, std::unique_ptr<Expression> expr)
-      : Statement(std::move(loc), Statement::Kind::ValueStmt),
-        _expr(std::move(expr)) {}
+      : Statement(loc, Statement::Kind::ValueStmt), _expr(std::move(expr)) {}
 
-  const Expression &getExpr() const { return *_expr; }
+  inline const Expression &getExpr() const { return *_expr; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// UnaryOperator - expression - operations with one operand
+/// ===-------------------------------------------------------------------=== //
 class UnaryOperator : public Expression {
 public:
   enum class Operator { Neg, Not };
 
+  UnaryOperator(Location loc, Operator opCode,
+                std::unique_ptr<Expression> operand)
+      : Expression(loc, Expression::Kind::UnaryOperator), _opCode(opCode),
+        _operand(std::move(operand)) {}
+
+  inline const Expression &getOperand() const { return *_operand; }
+  inline const Operator getOpCode() const { return _opCode; }
+
 private:
   Operator _opCode;
   std::unique_ptr<Expression> _operand;
-
-public:
-  UnaryOperator(Location loc, Operator opCode,
-                std::unique_ptr<Expression> operand)
-      : Expression(std::move(loc), Expression::Kind::UnaryOperator),
-        _opCode(opCode), _operand(std::move(operand)) {}
-
-  const Expression &getOperand() const { return *_operand; }
-  const Operator getOpCode() const { return _opCode; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// BinaryOperator - operation with two operands
+/// ===-------------------------------------------------------------------=== //
 class BinaryOperator : public Expression {
 public:
   enum class Operator {
@@ -146,13 +168,13 @@ public:
   BinaryOperator(Location loc, Operator opCode,
                  std::unique_ptr<Expression> leftHandSide,
                  std::unique_ptr<Expression> rightHandSide)
-      : Expression(std::move(loc), Expression::Kind::BinaryOperator),
-        _opCode(opCode), _leftHandSide(std::move(leftHandSide)),
+      : Expression(loc, Expression::Kind::BinaryOperator), _opCode(opCode),
+        _leftHandSide(std::move(leftHandSide)),
         _rightHandSide(std::move(rightHandSide)) {}
 
-  Operator getOpCode() const { return _opCode; }
-  const Expression &getLHS() const { return *_leftHandSide; }
-  const Expression &getRHS() const { return *_rightHandSide; }
+  inline Operator getOpCode() const { return _opCode; }
+  inline const Expression &getLHS() const { return *_leftHandSide; }
+  inline const Expression &getRHS() const { return *_rightHandSide; }
 
 private:
   Operator _opCode;
@@ -160,6 +182,9 @@ private:
   std::unique_ptr<Expression> _rightHandSide;
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Identifier - any named concept e.g. variable, type, method
+/// ===-------------------------------------------------------------------=== //
 class Identifier final : public ASTNode {
   const std::string _name;
 
@@ -167,22 +192,28 @@ public:
   Identifier(Location loc, const std::string &name)
       : ASTNode(std::move(loc)), _name(name){};
 
-  const std::string &getName() const { return _name; }
+  inline const std::string &getName() const { return _name; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// LValue - An expression with storage
+/// ===-------------------------------------------------------------------=== //
 class LValue : public Expression {
 public:
-  enum class Kind { LValueIdent, MemberAccess };
+  enum class Kind { Variable, MemberAccess };
 
-  Kind getKind() const { return _kind; }
+  inline Kind getKind() const { return _kind; }
 
 protected:
   Kind _kind;
 
   LValue(Location loc, Kind kind)
-      : Expression(std::move(loc), Expression::Kind::LValue), _kind(kind) {}
+      : Expression(loc, Expression::Kind::LValue), _kind(kind) {}
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// MemberAccess
+/// ===-------------------------------------------------------------------=== //
 class MemberAccess final : public LValue {
   friend class StaticMemberDecl;
   std::unique_ptr<Identifier> _member;
@@ -194,58 +225,71 @@ public:
       : LValue(loc, LValue::Kind::MemberAccess), _member(std::move(member)),
         _obj(std::move(object)) {}
 
-  const Identifier &getMember() const { return *_member; }
-  const Expression &getObject() const { return *_obj; }
+  inline const Identifier &getMember() const { return *_member; }
+  inline const Expression &getObject() const { return *_obj; }
 };
 
-// An Identifier that is an LValue
-class LValueIdent final : public LValue {
+/// ===-------------------------------------------------------------------=== //
+/// Variable - An Identifier that is an L Value
+/// ===-------------------------------------------------------------------=== //
+class Variable final : public LValue {
   std::unique_ptr<Identifier> _var;
-  bool _isWeak;
 
 public:
-  LValueIdent(Location loc, std::unique_ptr<Identifier> var,
-              bool isWeak = false)
-      : LValue(std::move(loc), LValue::Kind::LValueIdent), _var(std::move(var)),
-        _isWeak(isWeak) {}
+  Variable(Location loc, std::unique_ptr<Identifier> var)
+      : LValue(loc, LValue::Kind::Variable), _var(std::move(var)) {}
 
-  const Identifier &getVar() const { return *_var; }
-  bool isWeak() const { return _isWeak; }
+  inline const Identifier &getVar() const { return *_var; }
 };
 
-class VarDecl : public ASTNode {
+/// ===-------------------------------------------------------------------=== //
+/// Decl -- abstract declaration type
+/// ===-------------------------------------------------------------------=== //
+class Decl : public ASTNode {
+public:
+  enum class Kind { Var, Member };
+  inline const Identifier &getType() const { return *_type; }
+  inline bool isMemberDecl() const { return _kind == Kind::Member; }
+  inline Kind getKind() const { return _kind; }
+
 protected:
   std::unique_ptr<Identifier> _type;
-  std::unique_ptr<Identifier> _var;
-  bool memberDecl;
-
-public:
-  VarDecl(const Location &loc, std::unique_ptr<Identifier> var,
-          std::unique_ptr<Identifier> type, bool isMemberDecl = false)
-      : ASTNode(std::move(loc)), _var(std::move(var)), _type(std::move(type)),
-        memberDecl(isMemberDecl) {}
-
-  VarDecl(const Location &loc, std::unique_ptr<VarDecl> other)
-      : ASTNode(std::move(loc)), _var(std::move(other->_var)),
-        _type(std::move(other->_type)) {}
-
-  const Identifier &getType() const { return *_type; }
-  const Identifier &getVar() const { return *_var; }
-  bool isMemberDecl() const { return memberDecl; }
+  Kind _kind;
+  Decl(const Location &loc, std::unique_ptr<Identifier> type, Kind kind)
+      : ASTNode(loc), _type(std::move(type)), _kind(kind) {}
 };
 
-class StaticMemberDecl final : public VarDecl {
-  std::unique_ptr<Expression> _object;
+/// ===-------------------------------------------------------------------=== //
+/// VarDecl - a variable declaration, <var>: <type>
+/// ===-------------------------------------------------------------------=== //
+class VarDecl final : public Decl {
+  std::unique_ptr<Variable> _var;
+
+public:
+  VarDecl(const Location &loc, std::unique_ptr<Variable> var,
+          std::unique_ptr<Identifier> type)
+      : Decl(loc, std::move(type), Kind::Var), _var(std::move(var)) {}
+
+  inline const Identifier &getVar() const { return _var->getVar(); }
+};
+
+/// ===-------------------------------------------------------------------===
+/// StaticMemberDecl - Declaration of a field member <expr>.<var>: <type>
+/// ===-------------------------------------------------------------------===
+class StaticMemberDecl final : public Decl {
+  std::unique_ptr<MemberAccess> _object;
 
 public:
   StaticMemberDecl(Location loc, std::unique_ptr<MemberAccess> var,
                    std::unique_ptr<Identifier> type)
-      : VarDecl(loc, std::move(var->_member), std::move(type), true),
-        _object(std::move(var->_obj)) {}
+      : Decl(loc, std::move(type), Kind::Member), _object(std::move(var)) {}
 
-  const Expression &getObject() const { return *_object; }
+  inline const MemberAccess &getObject() const { return *_object; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Assignment - A variable declaration and assignment or update
+/// ===-------------------------------------------------------------------=== //
 class Assignment : public Statement {
 protected:
   std::unique_ptr<LValue> _lvalue;
@@ -254,105 +298,131 @@ protected:
 public:
   Assignment(Location loc, std::unique_ptr<LValue> lvalue,
              std::unique_ptr<Expression> rvalue)
-      : Statement(std::move(loc), Statement::Kind::Assignment),
-        _lvalue(std::move(lvalue)), _rvalue(std::move(rvalue)) {}
+      : Statement(loc, Statement::Kind::Assignment), _lvalue(std::move(lvalue)),
+        _rvalue(std::move(rvalue)) {}
 
-  const LValue &getLHS() const { return *_lvalue; }
-  const Expression &getRHS() const { return *_rvalue; }
+  inline const LValue &getLHS() const { return *_lvalue; }
+  inline const Expression &getRHS() const { return *_rvalue; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// StaticAssignment - A variable declaration and assignment
+/// ===-------------------------------------------------------------------=== //
 class StaticAssignment : public Statement {
 protected:
-  std::unique_ptr<VarDecl> _decl;
+  std::unique_ptr<Decl> _decl;
   std::unique_ptr<Expression> _rvalue;
 
 public:
-  StaticAssignment(Location loc, std::unique_ptr<VarDecl> decl,
+  StaticAssignment(Location loc, std::unique_ptr<Decl> decl,
                    std::unique_ptr<Expression> rvalue)
-      : Statement(std::move(loc), Statement::Kind::StaticAssignment),
+      : Statement(loc, Statement::Kind::StaticAssignment),
         _decl(std::move(decl)), _rvalue(std::move(rvalue)) {}
 
-  const VarDecl &getDecl() const { return *_decl; }
-  const Expression &getRHS() const { return *_rvalue; }
+  inline const Decl &getDecl() const { return *_decl; }
+  inline const Expression &getRHS() const { return *_rvalue; }
 };
 
-class IntegerLiteral final : public Expression {
-  long int _integer;
+/// ===-------------------------------------------------------------------=== //
+/// Literal template
+/// ===-------------------------------------------------------------------=== //
+template <typename T> class Literal {
+  T _literal;
 
 public:
-  explicit IntegerLiteral(Location loc, long int integer)
-      : Expression(std::move(loc), Expression::Kind::IntegerLiteral),
-        _integer(integer) {}
+  explicit Literal(T literal) : _literal(std::move(literal)) {}
 
-  long int getInteger() const { return _integer; }
+  inline T get() const { return _literal; }
 };
 
-class FloatLiteral final : public Expression {
-  double _float;
-
+/// ===-------------------------------------------------------------------=== //
+/// IntegerLiteral
+/// ===-------------------------------------------------------------------=== //
+class IntegerLiteral final : public Expression, public Literal<long int> {
 public:
-  explicit FloatLiteral(Location loc, double floatingpoint)
-      : Expression(std::move(loc), Expression::Kind::FloatLiteral),
-        _float(floatingpoint) {}
-
-  double getFloat() const { return _float; }
+  IntegerLiteral(Location loc, long int integer)
+      : Expression(loc, Expression::Kind::IntegerLiteral), Literal<long>(
+                                                               integer) {}
 };
 
-class BoolLiteral final : public Expression {
-  bool _bool;
+/// ===-------------------------------------------------------------------=== //
+/// FloatLiteral
+/// ===-------------------------------------------------------------------=== //
+class FloatLiteral final : public Expression, public Literal<double> {
+public:
+  FloatLiteral(Location loc, double theFloat)
+      : Expression(loc, Expression::Kind::FloatLiteral), Literal<double>(
+                                                             theFloat) {}
+};
 
+/// ===-------------------------------------------------------------------=== //
+/// BoolLiteral
+/// ===-------------------------------------------------------------------=== //
+class BoolLiteral final : public Expression, public Literal<bool> {
 public:
   BoolLiteral(Location loc, bool boolean)
-      : Expression(std::move(loc), Expression::Kind::BoolLiteral),
-        _bool(boolean) {}
-  bool getBool() const { return _bool; }
+      : Expression(loc, Expression::Kind::BoolLiteral), Literal<bool>(boolean) {
+  }
 };
 
-class StringLiteral final : public Expression {
-  std::string _text;
-
+/// ===-------------------------------------------------------------------=== //
+/// StringLiteral
+/// ===-------------------------------------------------------------------=== //
+class StringLiteral final : public Expression, public Literal<std::string> {
 public:
-  StringLiteral(Location loc, const std::string &text)
-      : Expression(std::move(loc), Expression::Kind::StringLiteral),
-        _text(text) {}
-
-  const std::string &getText() const { return _text; }
+  StringLiteral(Location loc, std::string text)
+      : Expression(loc, Expression::Kind::StringLiteral), Literal<std::string>(
+                                                              std::move(text)) {
+  }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Return
+/// ===-------------------------------------------------------------------=== //
 class Return final : public Statement {
   std::unique_ptr<Expression> _retVal;
 
 public:
   explicit Return(Location loc, std::unique_ptr<Expression> retVal)
-      : Statement(std::move(loc), Statement::Kind::Return),
-        _retVal(std::move(retVal)) {}
+      : Statement(loc, Statement::Kind::Return), _retVal(std::move(retVal)) {}
 
-  const Expression *getRetVal() const {
+  inline const Expression *getRetVal() const {
     return _retVal != nullptr ? _retVal.get() : nullptr;
   }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Arguments - A list of expressions
+/// ===-------------------------------------------------------------------=== //
 class Arguments final : public Sequence<Expression>, public ASTNode {
 public:
   explicit Arguments(const Location &loc) : ASTNode(loc) {}
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// PrintStatement
+/// ===-------------------------------------------------------------------=== //
 class PrintStatement : public Statement {
   std::unique_ptr<Arguments> exprList;
 
 public:
   PrintStatement(Location loc, std::unique_ptr<Arguments> exprList)
-      : Statement(std::move(loc), Statement::Kind::Print),
-        exprList(std::move(exprList)) {}
+      : Statement(loc, Statement::Kind::Print), exprList(std::move(exprList)) {}
 
-  auto &getArgs() const { return exprList; }
+  inline auto &getArgs() const { return exprList; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Parameters - a.k.a formals, a list of variable declarations
+/// ===-------------------------------------------------------------------=== //
 class Parameters final : public Sequence<VarDecl>, public ASTNode {
 public:
   explicit Parameters(const Location &loc) : ASTNode(loc) {}
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Method
+/// ===-------------------------------------------------------------------=== //
 class Method final : public ASTNode {
   std::unique_ptr<Parameters> _params;
   std::unique_ptr<Identifier> _name;
@@ -367,17 +437,23 @@ public:
       : ASTNode(loc), _params(std::move(params)), _name(std::move(name)),
         _returnType(std::move(returnType)), _body(std::move(body)) {}
 
-  const Parameters &getParams() const { return *_params; }
-  const Identifier &getMethodIdent() const { return *_name; }
-  const Identifier &getReturnType() const { return *_returnType; }
-  const CompoundStmt &getBody() const { return *_body; }
+  inline const Parameters &getParams() const { return *_params; }
+  inline const Identifier &getMethodIdent() const { return *_name; }
+  inline const Identifier &getReturnType() const { return *_returnType; }
+  inline const CompoundStmt &getBody() const { return *_body; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Methods - A list of Methods
+/// ===-------------------------------------------------------------------=== //
 class Methods final : public Sequence<Method>, public ASTNode {
 public:
   explicit Methods(const Location &loc) : ASTNode(loc) {}
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Class
+/// ===-------------------------------------------------------------------=== //
 class Class final : public ASTNode {
   std::unique_ptr<Methods> _methods;
   std::unique_ptr<Identifier> _name;
@@ -391,38 +467,42 @@ public:
       : ASTNode(loc), _methods(std::move(methods)), _name(std::move(name)),
         _constructor(std::move(constructor)), _super(std::move(super)) {}
 
-  const Method &getConstructor() const { return *_constructor; }
-  const Identifier &getClassIdent() const { return *_name; }
-  const Identifier *getSuper() const {
+  inline const Method &getConstructor() const { return *_constructor; }
+  inline const Identifier &getClassIdent() const { return *_name; }
+  inline const Identifier *getSuper() const {
     return _super.get(); /* could be null */
   }
-  const Methods &getMethods() const { return *_methods; }
+  inline const Methods &getMethods() const { return *_methods; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Classes - A list of Classes
+/// ===-------------------------------------------------------------------=== //
 class Classes final : public Sequence<Class>, public ASTNode {
 public:
   explicit Classes(const Location &loc) : ASTNode(loc) {}
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// Call - A method call
+/// ===-------------------------------------------------------------------=== //
 class Call final : public Expression {
-  std::unique_ptr<Expression> _caller;
-  std::unique_ptr<Identifier> _callee;
+  std::unique_ptr<Expression> _callee;
   std::unique_ptr<Arguments> _args;
 
 public:
-  Call(const Location &loc, std::unique_ptr<Expression> caller,
-       std::unique_ptr<Identifier> callee, std::unique_ptr<Arguments> args)
-      : Expression(loc, Expression::Kind::Call), _caller(std::move(caller)),
-        _callee(std::move(callee)), _args(std::move(args)) {}
+  Call(const Location &loc, std::unique_ptr<Expression> callee,
+       std::unique_ptr<Arguments> args)
+      : Expression(loc, Expression::Kind::Call), _callee(std::move(callee)),
+        _args(std::move(args)) {}
 
-  const Expression *getCaller() const {
-    return _caller ? _caller.get() : nullptr;
-  }
-  const Identifier *getCallee() const { return _callee.get(); }
-  const Arguments *getArgs() const { return _args.get(); }
-  bool isConstructorCall() const { return _caller == nullptr; }
+  inline const Expression &getCallee() const { return *_callee; }
+  inline const Arguments &getArgs() const { return *_args; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// If - conditional branch
+/// ===-------------------------------------------------------------------=== //
 class If final : public Statement {
   std::unique_ptr<Expression> _cond;
   std::unique_ptr<CompoundStmt> _ifStmts;
@@ -432,15 +512,18 @@ public:
   If(Location loc, std::unique_ptr<Expression> cond,
      std::unique_ptr<CompoundStmt> ifStmts,
      std::unique_ptr<CompoundStmt> elseStmts)
-      : Statement(std::move(loc), Statement::Kind::If), _cond(std::move(cond)),
+      : Statement(loc, Statement::Kind::If), _cond(std::move(cond)),
         _ifStmts(std::move(ifStmts)), _elseStmts(std::move(elseStmts)) {}
 
-  const Expression &getCond() const { return *_cond; }
-  const CompoundStmt &getIfBlock() const { return *_ifStmts; }
-  const CompoundStmt *getElseBlock() const { return _elseStmts.get(); }
-  bool hasElse() const { return _elseStmts != nullptr; }
+  inline const Expression &getCond() const { return *_cond; }
+  inline const CompoundStmt &getIfBlock() const { return *_ifStmts; }
+  inline const CompoundStmt *getElseBlock() const { return _elseStmts.get(); }
+  inline bool hasElse() const { return _elseStmts != nullptr; }
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// While - conditional loop
+/// ===-------------------------------------------------------------------=== //
 class While final : public Statement {
   std::unique_ptr<Expression> _cond;
   std::unique_ptr<CompoundStmt> _block;
@@ -448,15 +531,13 @@ class While final : public Statement {
 public:
   While(Location loc, std::unique_ptr<Expression> cond,
         std::unique_ptr<CompoundStmt> stmnts)
-      : Statement(std::move(loc), Statement::Kind::While),
-        _cond(std::move(cond)), _block(std::move(stmnts)) {}
+      : Statement(loc, Statement::Kind::While), _cond(std::move(cond)),
+        _block(std::move(stmnts)) {}
 
-  const Expression &getCond() const { return *_cond; }
-  const CompoundStmt &getBlock() const { return *_block; }
+  inline const Expression &getCond() const { return *_cond; }
+  inline const CompoundStmt &getBlock() const { return *_block; }
 };
 
-} // namespace ast
-
-} // namespace quack
+} // namespace quick::ast
 
 #endif // AST_HPP

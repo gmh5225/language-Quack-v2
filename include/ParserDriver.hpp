@@ -10,16 +10,16 @@
 
 #include <memory>
 
-namespace quack::parser {
+namespace quick::parser {
 class ParserDriver;
 }
 
-#define YY_DECL yy::parser::symbol_type yylex(quack::parser::ParserDriver &drv)
+#define YY_DECL yy::parser::symbol_type yylex(quick::parser::ParserDriver &drv)
 YY_DECL;
 
-using namespace quack::ast;
+using namespace quick::ast;
 
-namespace quack::parser {
+namespace quick::parser {
 class ParserDriver {
 
   friend yy::parser;
@@ -57,6 +57,6 @@ public:
 
   yy::location &getLocation() { return _location; }
 };
-}// namespace quack::parser
+}// namespace quick::parser
 
 #endif//QUACK_PARSERDRIVER_HPP

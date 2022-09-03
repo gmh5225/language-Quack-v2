@@ -4,7 +4,7 @@
 
 #include "ParserDriver.hpp"
 
-namespace quack::parser {
+namespace quick::parser {
 
 int ParserDriver::parse(const std::string &filename) {
   _curFile = filename;
@@ -20,7 +20,5 @@ int ParserDriver::parse(const std::string &filename) {
 }
 
 /// Defined in Lexer.lpp
-//    void ParserDriver::_scanEnd() {}
-//    void ParserDriver::_scanBegin() {}
 
-}// namespace quack::parser
+}// namespace quick::parser

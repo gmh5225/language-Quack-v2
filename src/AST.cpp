@@ -4,7 +4,7 @@
 
 #include "AST.hpp"
 
-namespace quack::ast {
+namespace quick::ast {
 
 bool CompoundStmt::hasReturn() const {
   for (auto &stmt : *this) {
@@ -25,4 +25,4 @@ bool CompoundStmt::hasReturn() const {
   return false;
 }
 
-} // namespace quack::ast
+} // namespace quick::ast

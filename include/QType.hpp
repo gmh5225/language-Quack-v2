@@ -26,8 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace quack {
-namespace type {
+namespace quick::type {
 
 class QType;
 
@@ -39,6 +38,9 @@ constexpr char StringStr[] = "String";
 constexpr char BoolStr[] = "Boolean";
 constexpr char NothingStr[] = "Nothing";
 
+/// ===-------------------------------------------------------------------=== //
+/// Unary/Binary operation keywords
+/// ===-------------------------------------------------------------------=== //
 namespace op {
 enum ARITH_OP { ADD = 0, SUB, MUL, DIV, MOD };
 constexpr const char *ArithmeticOperator[] = {"__add__", "__sub__", "__mul__",
@@ -52,21 +54,24 @@ constexpr const char *ComparisonOperator[] = {"__eq__", "__ne__", "__le__",
                                               "__lt__", "__ge__", "__gt__"};
 } // namespace op
 
-struct NamedVar {
+struct QVarDecl {
   QType *type;
   std::string name;
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// A Quick type's method internal representation
+/// ===-------------------------------------------------------------------=== //
 class QMethod {
 public:
   enum class Kind { Override, New, Constructor };
-  QMethod(QType *type, llvm::ArrayRef<NamedVar> actuals, QType *retType,
-         llvm::StringRef name, Kind kind = Kind::New)
+  QMethod(QType *type, llvm::ArrayRef<QVarDecl> actuals, QType *retType,
+          llvm::StringRef name, Kind kind = Kind::New)
       : type(type), actuals(actuals.begin(), actuals.end()),
         returnType(retType), name(name), kind(kind) {}
   bool operator==(const QMethod &);
 
-  const llvm::SmallVector<NamedVar, 6> &getActuals() const { return actuals; }
+  const llvm::SmallVector<QVarDecl, 6> &getActuals() const { return actuals; }
   QType *getReturnType() const { return returnType; }
   std::string getName() const { return name; }
   QType *getType() const { return type; }
@@ -75,13 +80,16 @@ public:
   std::unique_ptr<json::JSONNode> toJson();
 
 private:
-  llvm::SmallVector<NamedVar, 6> actuals;
+  llvm::SmallVector<QVarDecl, 6> actuals;
   QType *returnType;
   std::string name;
   QType *type;
   Kind kind;
 };
 
+/// ===-------------------------------------------------------------------=== //
+/// A Quick type internal representation
+/// ===-------------------------------------------------------------------=== //
 class QType {
   QType *parent;
   std::string name;
@@ -93,26 +101,25 @@ public:
   bool operator==(const QType &);
   bool operator!=(const QType &);
 
-  /// Getters
+  // Getters
   QType *getParent() { return parent; }
   const std::string &getName() const { return name; }
   llvm::MapVector<llvm::StringRef, QType *> &getMembers() { return members; }
   llvm::MapVector<llvm::StringRef, QMethod> &getMethods() { return methods; }
 
-  /// Builds types members and methods
+  // Builds types members and methods
   bool insertMethod(const std::string &name, QType *retType,
-                    llvm::ArrayRef<NamedVar> = {});
-  bool insertMember(const NamedVar &);
+                    llvm::ArrayRef<QVarDecl> = {});
+  bool insertMember(const QVarDecl &);
 
-  /// Utility
+  // Utility
   QType *lowestCommonAncestor(const QType *) const;
   bool isDescendentOf(const QType *) const;
-  const QMethod *lookUpMethod(llvm::StringRef ) const;
-  const QType *lookUpMember(llvm::StringRef ) const;
+  const QMethod *lookUpMethod(llvm::StringRef) const;
+  const QType *lookUpMember(llvm::StringRef) const;
   std::unique_ptr<json::JSONNode> toJson();
 };
 
-} // namespace type
-} // namespace quack
+} // namespace quick::type
 
 #endif // QUACK_QTYPE_HPP

@@ -37,6 +37,7 @@ add_executable(
         QTypeDB.cpp
         StmtTypeChecker.cpp
         TypeChecker.cpp
+        QuickTokenizer.cpp
         Utils.cpp)
 
 set_target_properties(quick PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
