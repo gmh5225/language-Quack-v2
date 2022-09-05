@@ -513,7 +513,7 @@ msgstr "REJECT medför en väsentlig prestandaförlust\n"
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
 msgstr ""
 "Regler för varierbar efterföljande kontext medför en väsentlig "
 "prestandaförlust\n"
@@ -743,7 +743,7 @@ msgstr "tom maskin i dupmachine()"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
 msgstr "Regel för varierbar efterföljande kontext på rad %d\n"
 
 #: src/nfa.c:357

@@ -136,7 +136,7 @@ AT_DATA_GRAMMAR([glr-regr2a.y],
 
 command:
     's' var 't'
-       { printf ("Variable: '%s'\n", $2); }
+       { printf ("IdentifierExpression: '%s'\n", $2); }
     'v' 'x' 'q'
        { free ($2); }
   | 's' var_list 't' 'e'
@@ -164,7 +164,7 @@ var_list:
   ;
 
 var_printer: 'v'
-   { printf ("Variable: '%s'\n", $-1); }
+   { printf ("IdentifierExpression: '%s'\n", $-1); }
 
 %%
 ]AT_YYERROR_DEFINE[
@@ -222,7 +222,7 @@ AT_DATA([input1.txt],
 [[s VARIABLE_1 t v x q
 ]])
 AT_PARSER_CHECK([[glr-regr2a input1.txt]], 0,
-[[Variable: 'VARIABLE_1'
+[[IdentifierExpression: 'VARIABLE_1'
 ]])
 
 AT_DATA([input2.txt],
@@ -237,7 +237,7 @@ AT_DATA([input3.txt],
 [[s VARIABLE_3 t v x
 ]])
 AT_PARSER_CHECK([[glr-regr2a input3.txt]], 0,
-[[Variable: 'VARIABLE_3'
+[[IdentifierExpression: 'VARIABLE_3'
 ]])
 
 

@@ -1149,7 +1149,7 @@ User-visible:
 	  are eliminated, the generated scanner will run faster.
 	  Backtracking is not yet documented in the manual entry.
 
-	- Variable trailing context now works, i.e., one can have
+	- IdentifierExpression trailing context now works, i.e., one can have
 	  rules like "(foo)*/[ \t]*bletch".  Some trailing context
 	  patterns still cannot be properly matched and generate
 	  error messages.  These are patterns where the ending of the

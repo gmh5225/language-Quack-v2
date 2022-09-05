@@ -616,7 +616,7 @@ Sun Jun 21 22:42:13 1992 Eric Youngdale <youngdale@v6550c.nrl.navy.mil>
 
 	* Makefile.in (.c.o): New rule.  Use $(DEFS) directly.
 	(CFLAGS): Use just -g by default.
-	(CDEBUG): Variable deleted.
+	(CDEBUG): IdentifierExpression deleted.
 
 1992-05-07  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
 

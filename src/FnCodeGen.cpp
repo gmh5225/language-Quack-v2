@@ -16,6 +16,20 @@ static llvm::Value *getNoOp(llvm::Module *module, llvm::LLVMContext &cntx) {
   return noop;
 }
 
+static Function *getOrCreateFnSym(const char *functionName,
+                                  llvm::Module &module, llvm::Type *resultType,
+                                  llvm::ArrayRef<Type *> params = {},
+                                  bool isVarArgs = false) {
+  Function *func = module.getFunction(functionName);
+  if (!func) {
+    FunctionType *FuncTy = FunctionType::get(resultType, params, isVarArgs);
+    func = Function::Create(FuncTy, GlobalValue::ExternalLinkage, functionName,
+                            module);
+    func->setCallingConv(CallingConv::C);
+  }
+  return func;
+}
+
 static inline llvm::Value *visitIntOrFloat(IRBuilder<> &builder,
                                            llvm::Type *type, Value *literal) {
   auto alloca = builder.CreateAlloca(type);
@@ -44,13 +58,20 @@ llvm::Value *ExprCodeGen::visitBoolLiteral(const ast::BoolLiteral &boolean) {
                          builder.getInt64(boolean.get()));
 }
 
-llvm::Value *ExprCodeGen::visitStringLiteral(const ast::StringLiteral &) {
-  return nullptr;
+llvm::Value *ExprCodeGen::visitStringLiteral(const ast::StringLiteral &strLit) {
+  llvm::Value *str = builder.CreateGlobalStringPtr(strLit.get());
+  Function *func = module.getFunction("String_create");
+  if (!func) {
+    logError("Link Error: function <String_create> not found");
+    return nullptr;
+  }
+  return builder.CreateCall(func, {str});
 }
 
 llvm::Value *ExprCodeGen::visitCall(const ast::Call &) { return nullptr; }
 
-llvm::Value *ExprCodeGen::visitVariable(const ast::Variable &lvalue) {
+llvm::Value *ExprCodeGen::visitIdentifierExpression(
+    const ast::IdentifierExpression &lvalue) {
   auto val = llvmEnv.lookup(lvalue.getVar().getName());
   assert(val && "value must exist in the environment");
   auto load = builder.CreateLoad(val);
@@ -151,7 +172,8 @@ bool FnCodeGen::visitCompoundStmt(const CompoundStmt &compoundStmt) {
 
 // bool FnCodeGen::visitVarDecl(const VarDecl &varDecl) { return false; }
 //
-// bool FnCodeGen::visitLValueIdent(const Variable &lValue) { return false; }
+// bool FnCodeGen::visitLValueIdent(const IdentifierExpression &lValue) { return
+// false; }
 
 /// Sometimes if statements produce blocks "if.cont" that might be empty, and
 /// have no predecessors(if body of if has return stmt).
@@ -236,7 +258,7 @@ bool FnCodeGen::visitIf(const If &ifStmt) {
     builder.SetInsertPoint(mergeBB);
 
     /// Merges the variables defined in both paths with a phi node
-    auto mergePaths = [&](){
+    auto mergePaths = [&]() {
       for (auto &pair : ThenEnv) {
         auto &var = pair.getFirst();
         if (!ElseEnv.lookup(var))
@@ -321,9 +343,11 @@ bool FnCodeGen::visitAssignment(const Assignment &assignment) {
   if (!rhsLLVMVal)
     return false;
 
-  if (assignment.getLHS().getKind() == LValue::Kind::Variable) {
+  if (assignment.getLHS().getKind() == LValue::Kind::Ident) {
     auto *llvmType = tr.get(rhsLLVMVal->getType());
-    auto &lvalue = static_cast<const Variable &>(assignment.getLHS());
+    assert(llvmType && "type must have been registered by this point -- bug");
+    auto &lvalue =
+        static_cast<const IdentifierExpression &>(assignment.getLHS());
     auto &var = lvalue.getVar().getName();
     if (auto *storage = llvmEnv.lookup(var)) {
       llvmType->instantiate(builder, storage, {rhsLLVMVal});
@@ -393,20 +417,14 @@ bool FnCodeGen::visitReturn(const ast::Return &returnStmt) {
 
 bool FnCodeGen::visitPrintStatement(const ast::PrintStatement &print) {
   // Creating/Getting a reference to systems printf
-  Function *func_printf = module.getFunction("printf");
-  if (!func_printf) {
-    PointerType *Pty = PointerType::get(IntegerType::get(module.getContext(), 8), 0);
-    FunctionType *FuncTy9 = FunctionType::get(IntegerType::get(module.getContext(), 32), true);
-
-    func_printf = Function::Create(FuncTy9, GlobalValue::ExternalLinkage, "printf", module);
-    func_printf->setCallingConv(CallingConv::C);
-  }
+  Function *func_printf = getOrCreateFnSym(
+      "printf", module, IntegerType::get(module.getContext(), 32), {}, true);
 
   // Creating the format string, and generating code for expressions
   std::string format;
   llvm::raw_string_ostream ss(format);
   SmallVector<Value *, 4> params;
-  for (auto &expr: *print.getArgs()) {
+  for (auto &expr : *print.getArgs()) {
     auto exprVal = exprCG.visitExpression(*expr);
     params.push_back(exprVal);
     auto valType = exprVal->getType();

@@ -605,7 +605,7 @@ GNU Bison NEWS
   The C++ deterministic skeleton (lalr1.cc) now supports LAC, via the
   %define variable parse.lac.
 
-*** Variable api.token.raw: Optimized token numbers (all skeletons)
+*** IdentifierExpression api.token.raw: Optimized token numbers (all skeletons)
 
   In the generated parsers, tokens have two numbers: the "external" token
   number as returned by yylex (which starts at 257), and the "internal"
@@ -2055,7 +2055,7 @@ GNU Bison NEWS
 
   String variables are used remaining cases, e.g. file names.
 
-** Variable api.token.prefix
+** IdentifierExpression api.token.prefix
 
   The variable api.token.prefix changes the way tokens are identified in
   the generated files.  This is especially useful to avoid collisions
@@ -2071,7 +2071,7 @@ GNU Bison NEWS
   use these prefixed token names, although the grammar itself still
   uses the short names (as in the sample rule given above).
 
-** Variable api.value.type
+** IdentifierExpression api.value.type
 
   This new %define variable supersedes the #define macro YYSTYPE.  The use
   of YYSTYPE is discouraged.  In particular, #defining YYSTYPE *and* either
@@ -2144,7 +2144,7 @@ GNU Bison NEWS
     yylval.u.ival = 42; return INT;
     yylval.u.sval = "42"; return STRING;
 
-** Variable parse.error
+** IdentifierExpression parse.error
 
   This variable controls the verbosity of error messages.  The use of the
   %error-verbose directive is deprecated in favor of "%define parse.error

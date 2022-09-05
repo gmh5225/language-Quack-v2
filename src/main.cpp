@@ -2,6 +2,7 @@
 #include "ParserDriver.hpp"
 #include "PrintVisitor.hpp"
 #include "QuickTokenizer.hpp"
+#include "Runtime.h"
 #include "TypeChecker.hpp"
 #include "Utils.hpp"
 
@@ -59,6 +60,10 @@ public:
     MainJD.addGenerator(
         cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(
             DL.getGlobalPrefix())));
+    SymbolMap map;
+    map[Mangle("String_create")] = JITEvaluatedSymbol(
+        pointerToJITTargetAddress(&String_create), JITSymbolFlags());
+    cantFail(MainJD.define(absoluteSymbols(map)));
   }
 
   static Expected<std::unique_ptr<JITEngine>> Create() {
@@ -99,22 +104,31 @@ class Driver {
   std::unique_ptr<llvm::orc::JITEngine> engine;
 
 public:
-  Driver() : engine(ExitOnErr(orc::JITEngine::Create())) {}
-
-  static bool TypeCheck(const TranslationUnit &root) {
-    quick::sema::TypeChecker tc;
-    return tc.visitTranslationUnit(root);
+  explicit Driver() {
+    InitializeNativeTarget();
+    InitializeNativeTargetAsmPrinter();
+    InitializeNativeTargetAsmParser();
+    engine = ExitOnErr(orc::JITEngine::Create());
   }
 
-  static std::unique_ptr<Module> CodeGen(const TranslationUnit &root,
-                                         LLVMContext &cntx,
-                                         const std::string &name) {
-    if (!TypeCheck(root))
+  bool TypeCheck(const TranslationUnit &root, const std::string &fname) {
+    std::fstream file(fname);
+    if (!file.is_open()) {
+      std::cerr << "can't open file " << fname << "\n";
+      return false;
+    }
+    quick::sema::TypeChecker tc(file, root);
+    return tc.verify();
+  }
+
+  std::unique_ptr<Module> CodeGen(const TranslationUnit &root,
+                                  LLVMContext &cntx, const std::string &name) {
+    if (!TypeCheck(root, name))
       return nullptr;
 
     auto module = std::make_unique<Module>(name, cntx);
     IRBuilder<> builder(cntx);
-    quick::codegen::LLVMTypeRegistry tr(cntx);
+    quick::codegen::LLVMTypeRegistry tr(*module);
     quick::codegen::FnCodeGen fnCodeGen(builder, *module,
                                         root.getCompoundStmt(), tr);
     if (!fnCodeGen.generate())
@@ -129,10 +143,37 @@ public:
     ExitOnErr(engine->addModule(std::move(module)));
     auto MainFn = ExitOnErr(engine->lookup("main"));
     auto FnPtr = (intptr_t)MainFn.getAddress();
+    //    String_create("");
     auto Fn = (int (*)())FnPtr;
     return Fn();
   }
 };
+
+bool TypeCheck(const TranslationUnit &root, const std::string &fname) {
+  std::fstream file(fname);
+  if (!file.is_open()) {
+    std::cerr << "can't open file " << fname << "\n";
+    return false;
+  }
+  quick::sema::TypeChecker tc(file, root);
+  return tc.verify();
+}
+
+std::unique_ptr<Module> CodeGen(const TranslationUnit &root, LLVMContext &cntx,
+                                const std::string &name) {
+  if (!TypeCheck(root, name))
+    return nullptr;
+
+  auto module = std::make_unique<Module>(name, cntx);
+  IRBuilder<> builder(cntx);
+  quick::codegen::LLVMTypeRegistry tr(*module);
+  quick::codegen::FnCodeGen fnCodeGen(builder, *module, root.getCompoundStmt(),
+                                      tr);
+  if (!fnCodeGen.generate())
+    return nullptr;
+
+  return module;
+}
 
 } // namespace quick::compiler
 
@@ -153,8 +194,56 @@ int main(int argc, char **argv) {
     std::exit(0);
   }
 
+  //  {
+  //    LLVMContext cntx;
+  //    llvm::TargetOptions Opts;
+  //    InitializeNativeTarget();
+  //    InitializeNativeTargetAsmPrinter();
+  //    auto JTMB = llvm::orc::JITTargetMachineBuilder::detectHost();
+  //    if(!JTMB) {
+  //      std::cerr << "failed to make jit target machine builder\n";
+  //      std::exit(1);
+  //    }
+  //
+  //    auto jitb = JTMB.get();
+  //    auto tm = JTMB->createTargetMachine();
+  //    if (!tm) {
+  //      std::cerr << "failed to make target machine\n";
+  //      std::exit(1);
+  //    }
+  //    auto module = quick::compiler::CodeGen(root, cntx, Filename);
+  //    if (!module)
+  //      std::exit(1);
+  //
+  //    auto *modulePtr = module.get();
+  //    std::unique_ptr<llvm::RTDyldMemoryManager> MemMgr(new
+  //    llvm::SectionMemoryManager()); llvm::EngineBuilder
+  //    factory(std::move(module));
+  //    factory.setEngineKind(llvm::EngineKind::JIT);
+  //    factory.setTargetOptions(Opts);
+  //    factory.setMCJITMemoryManager(std::move(MemMgr));
+  //    std::string err;
+  //    factory.setErrorStr(&err);
+  //    auto executionEngine =
+  //    std::unique_ptr<llvm::ExecutionEngine>(factory.create(tm->get())); if
+  //    (!executionEngine) {
+  //      llvm::errs() << err << "\n";
+  //      std::exit(1);
+  //    }
+  //
+  //    modulePtr->setDataLayout(executionEngine->getDataLayout());
+  //
+  //    executionEngine->finalizeObject();
+  //    auto fn = executionEngine->FindFunctionNamed("main");
+  //    auto *callable = (int (*)())executionEngine->getPointerToFunction(fn);
+  //    callable();
+  //    std::exit(0);
+  ////    executionEngine->addGlobalMapping()
+  //  }
+
   LLVMContext cntx;
-  auto module = quick::compiler::Driver::CodeGen(root, cntx, Filename);
+  quick::compiler::Driver compilerDriver;
+  auto module = compilerDriver.CodeGen(root, cntx, Filename);
   if (!module)
     std::exit(1);
 
@@ -163,10 +252,6 @@ int main(int argc, char **argv) {
     std::exit(0);
   }
 
-  InitializeNativeTarget();
-  InitializeNativeTargetAsmPrinter();
-  InitializeNativeTargetAsmParser();
-  quick::compiler::Driver Compiler;
-  int res = Compiler.JIT(std::move(module));
+  int res = compilerDriver.JIT(std::move(module));
   std::exit(res);
 }

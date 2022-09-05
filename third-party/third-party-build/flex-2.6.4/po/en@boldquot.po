@@ -529,8 +529,8 @@ msgstr "REJECT entails a large performance penalty\n"
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
-msgstr "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
+msgstr "IdentifierExpression trailing context rules entail a large performance penalty\n"
 
 #: src/main.c:1573
 msgid "REJECT cannot be used with -f or -F"
@@ -753,8 +753,8 @@ msgstr "empty machine in dupmachine()"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
-msgstr "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
+msgstr "IdentifierExpression trailing context rule at line %d\n"
 
 #: src/nfa.c:357
 msgid "bad state type in mark_beginning_as_normal()"

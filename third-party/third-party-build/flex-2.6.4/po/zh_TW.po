@@ -504,7 +504,7 @@ msgstr "REJECT 導致大幅效能減退\n"
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
 msgstr "變數末尾內文規則導致大幅效能減退\n"
 
 #: src/main.c:1573
@@ -728,7 +728,7 @@ msgstr "在 dupmachine() 中清空機器"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
 msgstr "變數末尾內文規則於列 %d\n"
 
 #: src/nfa.c:357

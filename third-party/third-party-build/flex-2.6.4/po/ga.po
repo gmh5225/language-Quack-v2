@@ -506,7 +506,7 @@ msgstr "is cúis le moilliú mór é REJECT\n"
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
 msgstr ""
 "is cúis le moilliú na rialacha maidir le comhthéacs leantach athraitheach\n"
 
@@ -735,7 +735,7 @@ msgstr "meaisín folamh i dupmachine()"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
 msgstr "Riail maidir le comhthéacs leantach athraitheach ag líne %d\n"
 
 #: src/nfa.c:357

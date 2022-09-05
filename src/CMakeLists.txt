@@ -14,6 +14,8 @@ set(LLVM_LINK_COMPONENTS
         LLVMInstCombine
         LLVMObject
         LLVMOrcJIT
+        LLVMMCJIT
+        LLVMJITLink
         LLVMRuntimeDyld
         LLVMScalarOpts
         LLVMSupport
@@ -29,7 +31,7 @@ add_executable(
         EnvironmentBuilder.cpp
         ExprTypeChecker.cpp
         FnCodeGen.cpp
-        LLVMType.cpp
+        IRType.cpp
         main.cpp
         ParserDriver.cpp
         PrintVisitor.cpp
@@ -38,6 +40,8 @@ add_executable(
         StmtTypeChecker.cpp
         TypeChecker.cpp
         QuickTokenizer.cpp
+        ClassVerifier.cpp
+        Runtime.cpp
         Utils.cpp)
 
 set_target_properties(quick PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")

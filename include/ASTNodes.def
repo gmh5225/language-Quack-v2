@@ -23,7 +23,7 @@ AST_NODES
   EXPR_NODE_HANDLER(FloatLiteral)                                              \
   EXPR_NODE_HANDLER(BoolLiteral)                                               \
   EXPR_NODE_HANDLER(StringLiteral)                                             \
-  EXPR_NODE_HANDLER(Variable)                                                  \
+  EXPR_NODE_HANDLER(IdentifierExpression)                                                  \
   EXPR_NODE_HANDLER(BinaryOperator)                                            \
   EXPR_NODE_HANDLER(UnaryOperator)                                             \
   EXPR_NODE_HANDLER(Call)                                                      \

@@ -122,11 +122,11 @@ type::QType *ExprTypeChecker::visitMemberAccess(const MemberAccess &) {
   return nullptr;
 }
 
-type::QType *ExprTypeChecker::visitVariable(const Variable &lvalue) {
+type::QType *ExprTypeChecker::visitIdentifierExpression(const IdentifierExpression &lvalue) {
   if (auto t = env.lookup(lvalue.getVar().getName()))
     return t;
   else {
-    logError(lvalue, "Variable <" + lvalue.getVar().getName() +
+    logError(lvalue, "IdentifierExpression <" + lvalue.getVar().getName() +
                          "> not declared in current scope");
     return nullptr;
   }

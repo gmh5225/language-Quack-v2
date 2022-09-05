@@ -14,45 +14,55 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 
+#include "QType.hpp"
 #include "QTypeDB.hpp"
 
 namespace quick {
 namespace codegen {
 
 /// ===-------------------------------------------------------------------=== //
-/// LLVMType - a class encapsulating a Quick type in llvm
+/// IRType - a class representing a Quick type in llvm ir
 /// ===-------------------------------------------------------------------=== //
-class LLVMType {
+class IRType {
 protected:
   llvm::LLVMContext &cntx;
   llvm::SmallVector<llvm::Function *, 0> methods; // method table
 
 public:
-  explicit LLVMType(llvm::LLVMContext &cntx) : cntx(cntx) {}
+  explicit IRType(llvm::LLVMContext &cntx) : cntx(cntx) {}
   virtual llvm::Type *getType() = 0;
   virtual llvm::StringRef getName() = 0;
+
+  /// Looks up the method in the dispatch table and performs a call
   virtual llvm::Value *dispatch(llvm::IRBuilder<> &b, const char *method,
                                 llvm::Value *self,
-                                llvm::ArrayRef<llvm::Value *> args) = 0;
+                                llvm::ArrayRef<llvm::Value *> args,
+                                llvm::Module *module = nullptr) = 0;
+
+  /// Automatic allocation on stack
   virtual llvm::Value *alloc(llvm::IRBuilder<> &b) = 0;
+
+  /// Stores object in the allocation "lvalue"
   virtual llvm::Value *instantiate(llvm::IRBuilder<> &b, llvm::Value *lvalue,
-                                   llvm::ArrayRef<llvm::Value *> args) = 0;
-  virtual ~LLVMType() = default;
+                                   llvm::ArrayRef<llvm::Value *> args,
+                                   llvm::Module *module = nullptr) = 0;
+  virtual ~IRType() = default;
 };
 
 /// ===-------------------------------------------------------------------=== //
 /// Primitive - a primitive type doesn't have a vtable and dynamic operations
 /// ===-------------------------------------------------------------------=== //
-class Primitive : public LLVMType {
+class Primitive : public IRType {
 protected:
   llvm::Type *t;
-  Primitive(llvm::LLVMContext &cntx, llvm::Type *t) : LLVMType(cntx), t(t) {}
+  Primitive(llvm::LLVMContext &cntx, llvm::Type *t) : IRType(cntx), t(t) {}
 
 public:
   llvm::Type *getType() override { return t; }
   llvm::Value *alloc(llvm::IRBuilder<> &b) override;
   llvm::Value *instantiate(llvm::IRBuilder<> &b, llvm::Value *lvalue,
-                           llvm::ArrayRef<llvm::Value *> args) override;
+                           llvm::ArrayRef<llvm::Value *> args,
+                           llvm::Module *module = nullptr) override;
 };
 
 /// ===-------------------------------------------------------------------=== //
@@ -64,8 +74,8 @@ public:
       : Primitive(cntx, llvm::IntegerType::getInt64Ty(cntx)) {}
   llvm::StringRef getName() override { return "Integer"; }
   llvm::Value *dispatch(llvm::IRBuilder<> &b, const char *method,
-                        llvm::Value *self,
-                        llvm::ArrayRef<llvm::Value *> args) override;
+                        llvm::Value *self, llvm::ArrayRef<llvm::Value *> args,
+                        llvm::Module *module = nullptr) override;
 };
 
 /// ===-------------------------------------------------------------------=== //
@@ -77,8 +87,8 @@ public:
       : Primitive(cntx, llvm::Type::getDoubleTy(cntx)) {}
   llvm::StringRef getName() override { return "Float"; }
   llvm::Value *dispatch(llvm::IRBuilder<> &b, const char *method,
-                        llvm::Value *self,
-                        llvm::ArrayRef<llvm::Value *> args) override;
+                        llvm::Value *self, llvm::ArrayRef<llvm::Value *> args,
+                        llvm::Module *module = nullptr) override;
 };
 
 /// ===-------------------------------------------------------------------=== //
@@ -90,47 +100,77 @@ public:
       : Primitive(cntx, llvm::IntegerType::getInt8Ty(cntx)) {}
   llvm::StringRef getName() override { return "Boolean"; }
   llvm::Value *dispatch(llvm::IRBuilder<> &b, const char *method,
-                        llvm::Value *self,
-                        llvm::ArrayRef<llvm::Value *> args) override;
+                        llvm::Value *self, llvm::ArrayRef<llvm::Value *> args,
+                        llvm::Module *module = nullptr) override;
 };
 
 /// ===-------------------------------------------------------------------=== //
 /// ComplexType - has zero or more members and zero or more methods
 /// ===-------------------------------------------------------------------=== //
-class ComplexType : public LLVMType {
-  llvm::SmallVector<llvm::Type *, 1> members;
-  llvm::StructType *vtable;
+class ComplexType : public IRType {
+protected:
+  llvm::Module &module;
+  llvm::StructType *llvmType;
+  llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable;
   std::string name;
 
+  ComplexType(
+      llvm::Module &module, llvm::StructType *llvmType,
+      llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable,
+      llvm::StringRef name)
+      : IRType(module.getContext()), module(module), llvmType(llvmType),
+        methodTable(std::move(methodTable)), name(name) {}
+
 public:
-  ComplexType(llvm::LLVMContext &cntx, llvm::ArrayRef<llvm::Type *> members,
-              llvm::StructType *vtable, llvm::StringRef name)
-      : LLVMType(cntx), members(members.begin(), members.end()), vtable(vtable),
-        name(name) {}
-  llvm::Type *getType() override { return nullptr; }
+  llvm::Type *getType() override { return llvm::PointerType::get(llvmType, 0); }
   llvm::StringRef getName() override { return name; }
   llvm::Value *dispatch(llvm::IRBuilder<> &b, const char *method,
-                        llvm::Value *self,
-                        llvm::ArrayRef<llvm::Value *> args) override;
+                        llvm::Value *self, llvm::ArrayRef<llvm::Value *> args,
+                        llvm::Module *module) override;
   llvm::Value *alloc(llvm::IRBuilder<> &b) override;
   llvm::Value *instantiate(llvm::IRBuilder<> &b, llvm::Value *lvalue,
-                           llvm::ArrayRef<llvm::Value *> args) override;
+                           llvm::ArrayRef<llvm::Value *> args,
+                           llvm::Module *module) override;
+
+  static std::unique_ptr<ComplexType>
+  create(llvm::Module &module, llvm::StringRef name, ComplexType *super,
+         llvm::ArrayRef<llvm::Type *> members,
+         llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable);
 };
 
 /// ===-------------------------------------------------------------------=== //
-/// LLVMTypeRegisterty - mapping from Quick type and llvm type to LLVMType
+/// ObjectType - the root of the Type hierarchy, every other type in Quick
+/// inherits from this type. This type defines the default vtable
+/// ===-------------------------------------------------------------------=== //
+class ObjectType : public ComplexType {
+public:
+  ObjectType(llvm::Module &module, llvm::StructType *llvmType,
+             llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable)
+      : ComplexType(module, llvmType, std::move(methodTable), "Object") {}
+};
+
+class StringType : public ComplexType {
+public:
+  StringType(llvm::Module &module, llvm::StructType *llvmType,
+             llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable)
+      : ComplexType(module, llvmType, std::move(methodTable), "String") {}
+};
+
+/// ===-------------------------------------------------------------------=== //
+/// LLVMTypeRegistry - mapping from Quick type and llvm type to IRType
 /// ===-------------------------------------------------------------------=== //
 class LLVMTypeRegistry {
-  llvm::LLVMContext &cntx;
-  llvm::StringMap<std::unique_ptr<LLVMType>> stringmap;
-  llvm::DenseMap<llvm::Type *, LLVMType *> typemap;
+  llvm::Module &module;
+  llvm::StringMap<std::unique_ptr<IRType>> stringmap;
+  llvm::DenseMap<llvm::Type *, IRType *> typemap;
 
 public:
-  explicit LLVMTypeRegistry(llvm::LLVMContext &cntx);
+  explicit LLVMTypeRegistry(llvm::Module &module);
   LLVMTypeRegistry(const LLVMTypeRegistry &) = delete;
   LLVMTypeRegistry &operator=(const LLVMTypeRegistry &) = delete;
-  LLVMType *get(type::QType *qtype);
-  LLVMType *get(llvm::Type *type);
+  IRType *get(type::QType *qtype);
+  IRType *get(llvm::Type *type);
+  void dump(llvm::raw_ostream &out = llvm::errs());
 };
 
 } // namespace codegen

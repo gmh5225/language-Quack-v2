@@ -11,7 +11,7 @@
 #include "Environment.hpp"
 #include "EnvironmentBuilder.hpp"
 #include "ExprTypeChecker.hpp"
-#include "LLVMType.hpp"
+#include "IRType.hpp"
 #include "QTypeDB.hpp"
 
 namespace quick::codegen {
@@ -22,6 +22,7 @@ constexpr char MainFn[] = "main";
 /// An expression visitor that generates code for a given expression
 /// ===-------------------------------------------------------------------=== //
 class ExprCodeGen : public ast::ASTVisitor<ExprCodeGen, llvm::Value *> {
+  llvm::Module &module;
   llvm::IRBuilder<> &builder;
   llvm::LLVMContext &llvmCntx;
   LLVMTypeRegistry &typeRegistery;
@@ -30,9 +31,9 @@ class ExprCodeGen : public ast::ASTVisitor<ExprCodeGen, llvm::Value *> {
   sema::ExprTypeChecker exprTC;
 
 public:
-  ExprCodeGen(llvm::IRBuilder<> &b, LLVMTypeRegistry &tr, sema::Env &env,
-              LLVMEnv &llvmEnv)
-      : builder(b), llvmCntx(b.getContext()), typeRegistery(tr),
+  ExprCodeGen(llvm::Module &module, llvm::IRBuilder<> &b, LLVMTypeRegistry &tr,
+              sema::Env &env, LLVMEnv &llvmEnv)
+      : module(module), builder(b), llvmCntx(b.getContext()), typeRegistery(tr),
         llvmEnv(llvmEnv), tdb(type::QTypeDB::get()), exprTC(tdb, env) {}
   llvm::Value *visitTranslationUnit(const TranslationUnit &) = delete;
   llvm::Value *visitStatement(const Statement &) = delete;
@@ -64,7 +65,7 @@ public:
             const ast::CompoundStmt &cmpStmt, LLVMTypeRegistry &tr,
             type::QType *parentType = nullptr, llvm::StringRef fnName = MainFn)
       : fnName(fnName), module(module), builder(builder), tr(tr),
-        exprCG(builder, tr, env, llvmEnv), fnBody(cmpStmt),
+        exprCG(module, builder, tr, env, llvmEnv), fnBody(cmpStmt),
         tdb(type::QTypeDB::get()), parentType(parentType), exprTC(tdb, env) {}
 
   bool visitTranslationUnit(const TranslationUnit &) = delete;

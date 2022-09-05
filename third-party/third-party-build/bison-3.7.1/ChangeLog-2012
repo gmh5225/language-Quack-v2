@@ -2993,7 +2993,7 @@
 	Introduce a macro TOKEN to shorten the code and make it more
 	readable.
 	(Calc++ Scanner): Adjust.
-	* NEWS (Variable token.prefix): New.
+	* NEWS (IdentifierExpression token.prefix): New.
 
 2009-05-04  Akim Demaille  <demaille@gostai.com>
 

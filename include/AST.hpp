@@ -24,8 +24,8 @@ protected:
 
 public:
   const Location &getLocation() const { return _loc; }
-  template <typename T> inline const T *as_a(const T &astNode) const {
-    return dynamic_cast<const T *>(&astNode);
+  template <typename T> inline const T *as_a() const {
+    return dynamic_cast<const T *>(this);
   }
   virtual ~ASTNode() = default;
 };
@@ -200,7 +200,7 @@ public:
 /// ===-------------------------------------------------------------------=== //
 class LValue : public Expression {
 public:
-  enum class Kind { Variable, MemberAccess };
+  enum class Kind { Ident, MemberAccess };
 
   inline Kind getKind() const { return _kind; }
 
@@ -230,14 +230,14 @@ public:
 };
 
 /// ===-------------------------------------------------------------------=== //
-/// Variable - An Identifier that is an L Value
+/// IdentifierExpression - An Identifier that is an L Value
 /// ===-------------------------------------------------------------------=== //
-class Variable final : public LValue {
+class IdentifierExpression final : public LValue {
   std::unique_ptr<Identifier> _var;
 
 public:
-  Variable(Location loc, std::unique_ptr<Identifier> var)
-      : LValue(loc, LValue::Kind::Variable), _var(std::move(var)) {}
+  IdentifierExpression(Location loc, std::unique_ptr<Identifier> var)
+      : LValue(loc, LValue::Kind::Ident), _var(std::move(var)) {}
 
   inline const Identifier &getVar() const { return *_var; }
 };
@@ -263,10 +263,10 @@ protected:
 /// VarDecl - a variable declaration, <var>: <type>
 /// ===-------------------------------------------------------------------=== //
 class VarDecl final : public Decl {
-  std::unique_ptr<Variable> _var;
+  std::unique_ptr<IdentifierExpression> _var;
 
 public:
-  VarDecl(const Location &loc, std::unique_ptr<Variable> var,
+  VarDecl(const Location &loc, std::unique_ptr<IdentifierExpression> var,
           std::unique_ptr<Identifier> type)
       : Decl(loc, std::move(type), Kind::Var), _var(std::move(var)) {}
 

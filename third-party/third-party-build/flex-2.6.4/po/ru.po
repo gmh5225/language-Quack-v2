@@ -513,7 +513,7 @@ msgstr "REJECT влечёт значительное снижение произ
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
 msgstr ""
 "Правила с переменным замыкающим контекстом приводят к значительному снижению "
 "производительности\n"
@@ -749,7 +749,7 @@ msgstr "пустой автомат в dupmachine()"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
 msgstr "Правило с переменным замыкающим контекстом в строке %d\n"
 
 #: src/nfa.c:357

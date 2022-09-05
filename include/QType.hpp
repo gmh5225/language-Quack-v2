@@ -38,6 +38,10 @@ constexpr char StringStr[] = "String";
 constexpr char BoolStr[] = "Boolean";
 constexpr char NothingStr[] = "Nothing";
 
+static inline bool isPrimitive(const std::string &str) {
+  return (str == IntegerStr || str == FloatStr || str == BoolStr);
+}
+
 /// ===-------------------------------------------------------------------=== //
 /// Unary/Binary operation keywords
 /// ===-------------------------------------------------------------------=== //

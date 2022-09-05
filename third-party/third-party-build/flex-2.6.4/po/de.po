@@ -508,7 +508,7 @@ msgstr "REJECT führt zu großen Geschwindigkeitseinbußen\n"
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
 msgstr ""
 "Regeln mit variablem folgenden Kontext führen zu großen "
 "Geschwindigkeitseinbußen\n"
@@ -742,7 +742,7 @@ msgstr "leere Maschine in dupmachine()"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
 msgstr "Regel mit veränderlichem folgenden Kontext in Zeile %d\n"
 
 #: src/nfa.c:357

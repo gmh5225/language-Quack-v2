@@ -56,7 +56,7 @@ comment     \/\/[^\n]*
 %}
 
 {blank}+   loc.step ();
-{comment}+ loc.lines(yyleng); loc.step();
+{comment}+ loc.step();
 \n+        loc.lines (yyleng); loc.step ();
 
 

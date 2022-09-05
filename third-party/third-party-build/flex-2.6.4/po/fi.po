@@ -516,7 +516,7 @@ msgstr "REJECT tuo mukanaan ison suorituskykyrangaistuksen\n"
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
 msgstr "Muuttujajättökontekstisäännöt tuovat mukanaan ison suorityskykysakon\n"
 
 #: src/main.c:1573
@@ -750,7 +750,7 @@ msgstr "tyhjä kone funktiossa dupmachine()"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
 msgstr "Muuttujajättökontekstisääntö rivillä %d\n"
 
 #: src/nfa.c:357

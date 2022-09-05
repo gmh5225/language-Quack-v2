@@ -5,8 +5,8 @@
 #ifndef QUACK_QTYPEDB_HPP
 #define QUACK_QTYPEDB_HPP
 
+#include "IRType.hpp"
 #include "QType.hpp"
-#include "LLVMType.hpp"
 
 namespace quick::type {
 

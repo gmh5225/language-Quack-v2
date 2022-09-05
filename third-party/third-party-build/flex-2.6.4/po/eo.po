@@ -508,7 +508,7 @@ msgstr "REJECT alportas grandan malaltigon de rendimento\n"
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
 msgstr "Variabla vosta kunteksto alportas grandan malaltigon de rendimento\n"
 
 #: src/main.c:1573
@@ -736,7 +736,7 @@ msgstr "malplena maŝino en dupmachine()"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
 msgstr "Variabla vosta kunteksta regulo ĉe linio %d\n"
 
 #: src/nfa.c:357

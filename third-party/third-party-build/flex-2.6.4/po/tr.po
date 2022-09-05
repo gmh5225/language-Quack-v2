@@ -507,7 +507,7 @@ msgstr "REJECT büyük ölçekli bir yavaşlamaya neden olur\n"
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
 msgstr ""
 "Değişken izleyen bağlam kuralları, büyük ölçekli yavaşlamaya neden olur\n"
 
@@ -733,7 +733,7 @@ msgstr "dupmachine() içinde boş makine"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
 msgstr "%d satırında değişken izleyen bağlam kuralı\n"
 
 #: src/nfa.c:357

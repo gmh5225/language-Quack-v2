@@ -2,7 +2,7 @@
 // Created by parsab on 6/14/22.
 //
 
-#include "StmtVerifier.h"
+#include "StmtVerifier.hpp"
 
 namespace quick {
 namespace sema {
@@ -48,7 +48,7 @@ bool StmtVerifier::visitAssignment(const ast::Assignment &assignment) {
   if (!rhsType)
     return false;
 
-  if (auto *ident = dynamic_cast<const Variable *>(&assignment.getLHS())) {
+  if (auto *ident = dynamic_cast<const IdentifierExpression *>(&assignment.getLHS())) {
     auto &var = ident->getVar().getName();
     if (auto *varType = env.lookup(var)) {
       if (varType != rhsType) {

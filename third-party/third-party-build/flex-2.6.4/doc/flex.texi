@@ -3536,7 +3536,7 @@ It's important to keep in mind that you gain the benefits of eliminating
 backing up only if you eliminate @emph{every} instance of backing up.
 Leaving just one means you gain nothing.
 
-@emph{Variable} trailing context (where both the leading and trailing
+@emph{IdentifierExpression} trailing context (where both the leading and trailing
 parts do not have a fixed length) entails almost the same performance
 loss as @code{REJECT} (i.e., substantial).  So when possible a rule
 like:

@@ -32,8 +32,8 @@ public:
   /// Abstract node handlers that dispatch to concrete subtype in the AST
   RetType visitLValue(const LValue &lValue, Args &&...args) {
     switch (lValue.getKind()) {
-    case LValue::Kind::Variable:
-      DISPATCH(Variable, lValue);
+    case LValue::Kind::Ident:
+      DISPATCH(IdentifierExpression, lValue);
     case LValue::Kind::MemberAccess:
       DISPATCH(MemberAccess, lValue);
     default:

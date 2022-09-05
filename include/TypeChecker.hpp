@@ -13,8 +13,12 @@ namespace quick {
 namespace sema {
 
 class TypeChecker {
+  std::fstream &file;
+  const ast::TranslationUnit &tu;
+
 public:
-  bool visitTranslationUnit(const ast::TranslationUnit &tu);
+  TypeChecker(std::fstream &f, const ast::TranslationUnit &tu) : file(f), tu(tu) {}
+  bool verify();
 };
 
 } // namespace sema

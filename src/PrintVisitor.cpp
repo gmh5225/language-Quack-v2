@@ -68,8 +68,8 @@ void PrintVisitor::visitStaticMemberDecl(const quick::ast::StaticMemberDecl &mem
   dedent();
 }
 
-void PrintVisitor::visitVariable(const Variable &lValue)  {
-  emitln("Variable ");
+void PrintVisitor::visitIdentifierExpression(const IdentifierExpression &lValue)  {
+  emitln("IdentifierExpression ");
   indent(IndentationType::DiagBar);
   visitIdentifier(lValue.getVar());
   dedent();

@@ -514,7 +514,7 @@ msgstr "REJECT betekent een grote prestatievermindering\n"
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
 msgstr ""
 "Voorschriften met variabele nakomende context betekenen een grote "
 "prestatievermindering\n"
@@ -748,7 +748,7 @@ msgstr "lege machine in dupmachine()"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
 msgstr "Voorschrift met variabele nakomende context op regel %d\n"
 
 #: src/nfa.c:357

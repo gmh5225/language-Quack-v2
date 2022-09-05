@@ -517,7 +517,7 @@ msgstr "REJECT implica una penalització del rendiment molt gran\n"
 
 #: src/main.c:1561
 #, c-format
-msgid "Variable trailing context rules entail a large performance penalty\n"
+msgid "IdentifierExpression trailing context rules entail a large performance penalty\n"
 msgstr ""
 "Les regles de context posterior variable implica una penalització del "
 "rendiment molt gran\n"
@@ -759,7 +759,7 @@ msgstr "màquina buida en dupmachine()"
 
 #: src/nfa.c:234
 #, c-format
-msgid "Variable trailing context rule at line %d\n"
+msgid "IdentifierExpression trailing context rule at line %d\n"
 msgstr "Regla de context posterior variable en la línia %d\n"
 
 #: src/nfa.c:357

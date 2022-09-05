@@ -7842,22 +7842,22 @@ report memory exhaustion.
 Here is a table of Bison constructs, variables and macros that are useful in
 actions.
 
-@deffn {Variable} $$
+@deffn {IdentifierExpression} $$
 Acts like a variable that contains the semantic value for the
 grouping made by the current rule.  @xref{Actions}.
 @end deffn
 
-@deffn {Variable} $@var{n}
+@deffn {IdentifierExpression} $@var{n}
 Acts like a variable that contains the semantic value for the
 @var{n}th component of the current rule.  @xref{Actions}.
 @end deffn
 
-@deffn {Variable} $<@var{typealt}>$
+@deffn {IdentifierExpression} $<@var{typealt}>$
 Like @code{$$} but specifies alternative @var{typealt} in the union
 specified by the @code{%union} declaration.  @xref{Action Types}.
 @end deffn
 
-@deffn {Variable} $<@var{typealt}>@var{n}
+@deffn {IdentifierExpression} $<@var{typealt}>@var{n}
 Like @code{$@var{n}} but specifies alternative @var{typealt} in the
 union specified by the @code{%union} declaration.
 @xref{Action Types}.
@@ -7914,8 +7914,8 @@ is recovering from a syntax error, and 0 otherwise.
 @xref{Error Recovery}.
 @end deffn
 
-@deffn {Variable} yychar
-Variable containing either the lookahead token, or @code{YYEOF} when the
+@deffn {IdentifierExpression} yychar
+IdentifierExpression containing either the lookahead token, or @code{YYEOF} when the
 lookahead is the end of the input stream, or @code{YYEMPTY} when no lookahead
 has been performed so the next token is not yet known.
 Do not modify @code{yychar} in a deferred semantic action (@pxref{GLR Semantic
@@ -7937,16 +7937,16 @@ errors.  This is useful primarily in error rules.
 @xref{Error Recovery}.
 @end deffn
 
-@deffn {Variable} yylloc
-Variable containing the lookahead token location when @code{yychar} is not set
+@deffn {IdentifierExpression} yylloc
+IdentifierExpression containing the lookahead token location when @code{yychar} is not set
 to @code{YYEMPTY} or @code{YYEOF}.
 Do not modify @code{yylloc} in a deferred semantic action (@pxref{GLR Semantic
 Actions}).
 @xref{Actions and Locations}.
 @end deffn
 
-@deffn {Variable} yylval
-Variable containing the lookahead token semantic value when @code{yychar} is
+@deffn {IdentifierExpression} yylval
+IdentifierExpression containing the lookahead token semantic value when @code{yychar} is
 not set to @code{YYEMPTY} or @code{YYEOF}.
 Do not modify @code{yylval} in a deferred semantic action (@pxref{GLR Semantic
 Actions}).
@@ -15086,12 +15086,12 @@ See @url{http://lists.gnu.org/}.
 @cindex Bison symbols, table of
 @cindex symbols in Bison, table of
 
-@deffn {Variable} @@$
+@deffn {IdentifierExpression} @@$
 In an action, the location of the left-hand side of the rule.
 @xref{Tracking Locations}.
 @end deffn
 
-@deffn {Variable} @@@var{n}
+@deffn {IdentifierExpression} @@@var{n}
 @deffnx {Symbol} @@@var{n}
 In an action, the location of the @var{n}-th symbol of the right-hand side
 of the rule.  @xref{Tracking Locations}.
@@ -15100,8 +15100,8 @@ In a grammar, the Bison-generated nonterminal symbol for a midrule action
 with a semantic value.  @xref{Midrule Action Translation}.
 @end deffn
 
-@deffn {Variable} @@@var{name}
-@deffnx {Variable} @@[@var{name}]
+@deffn {IdentifierExpression} @@@var{name}
+@deffnx {IdentifierExpression} @@[@var{name}]
 In an action, the location of a symbol addressed by @var{name}.
 @xref{Tracking Locations}.
 @end deffn
@@ -15111,18 +15111,18 @@ In a grammar, the Bison-generated nonterminal symbol for a midrule action
 with no semantics value.  @xref{Midrule Action Translation}.
 @end deffn
 
-@deffn {Variable} $$
+@deffn {IdentifierExpression} $$
 In an action, the semantic value of the left-hand side of the rule.
 @xref{Actions}.
 @end deffn
 
-@deffn {Variable} $@var{n}
+@deffn {IdentifierExpression} $@var{n}
 In an action, the semantic value of the @var{n}-th symbol of the
 right-hand side of the rule.  @xref{Actions}.
 @end deffn
 
-@deffn {Variable} $@var{name}
-@deffnx {Variable} $[@var{name}]
+@deffn {IdentifierExpression} $@var{name}
+@deffnx {IdentifierExpression} $[@var{name}]
 In an action, the semantic value of a symbol addressed by @var{name}.
 @xref{Actions}.
 @end deffn
@@ -15430,14 +15430,14 @@ Macro to discard a value from the parser stack and fake a lookahead
 token.  @xref{Action Features}.
 @end deffn
 
-@deffn {Variable} yychar
+@deffn {IdentifierExpression} yychar
 External integer variable that contains the integer value of the
 lookahead token.  (In a pure parser, it is a local variable within
 @code{yyparse}.)  Error-recovery rule actions may examine this variable.
 @xref{Action Features}.
 @end deffn
 
-@deffn {Variable} yyclearin
+@deffn {IdentifierExpression} yyclearin
 Macro used in error-recovery rule actions.  It clears the previous
 lookahead token.  @xref{Error Recovery}.
 @end deffn
@@ -15446,7 +15446,7 @@ lookahead token.  @xref{Error Recovery}.
 Macro to define to equip the parser with tracing code.  @xref{Tracing}.
 @end deffn
 
-@deffn {Variable} yydebug
+@deffn {IdentifierExpression} yydebug
 External integer variable set to zero by default.  If @code{yydebug}
 is given a nonzero value, the parser will output information on input
 symbols and parser action.  @xref{Tracing}.
@@ -15496,7 +15496,7 @@ User-supplied lexical analyzer function, called with no arguments to get
 the next token.  @xref{Lexical}.
 @end deffn
 
-@deffn {Variable} yylloc
+@deffn {IdentifierExpression} yylloc
 External variable in which @code{yylex} should place the line and column
 numbers associated with a token.  (In a pure parser, it is a local
 variable within @code{yyparse}, and its address is passed to
@@ -15513,7 +15513,7 @@ Data type of @code{yylloc}.  By default in C, a structure with four members
 (start/end line/column).  @xref{Location Type}.
 @end deffn
 
-@deffn {Variable} yylval
+@deffn {IdentifierExpression} yylval
 External variable in which @code{yylex} should place the semantic
 value associated with a token.  (In a pure parser, it is a local
 variable within @code{yyparse}, and its address is passed to
@@ -15528,7 +15528,7 @@ Macro for specifying the maximum size of the parser stack.  @xref{Memory
 Management}.
 @end deffn
 
-@deffn {Variable} yynerrs
+@deffn {IdentifierExpression} yynerrs
 Global variable which Bison increments each time it reports a syntax error.
 (In a pure parser, it is a local variable within @code{yyparse}. In a
 pure push parser, it is a member of @code{yypstate}.)

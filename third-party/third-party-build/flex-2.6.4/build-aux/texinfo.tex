@@ -123,7 +123,7 @@
 \ifx\putwordIndexIsEmpty\undefined       \gdef\putwordIndexIsEmpty{(Index is empty)}\fi
 \ifx\putwordIndexNonexistent\undefined   \gdef\putwordIndexNonexistent{(Index is nonexistent)}\fi
 \ifx\putwordInfo\undefined      \gdef\putwordInfo{Info}\fi
-\ifx\putwordInstanceVariableof\undefined \gdef\putwordInstanceVariableof{Instance Variable of}\fi
+\ifx\putwordInstanceVariableof\undefined \gdef\putwordInstanceVariableof{Instance IdentifierExpression of}\fi
 \ifx\putwordMethodon\undefined  \gdef\putwordMethodon{Method on}\fi
 \ifx\putwordNoTitle\undefined   \gdef\putwordNoTitle{No Title}\fi
 \ifx\putwordof\undefined        \gdef\putwordof{of}\fi
@@ -151,7 +151,7 @@
 %
 \ifx\putwordDefmac\undefined    \gdef\putwordDefmac{Macro}\fi
 \ifx\putwordDefspec\undefined   \gdef\putwordDefspec{Special Form}\fi
-\ifx\putwordDefvar\undefined    \gdef\putwordDefvar{Variable}\fi
+\ifx\putwordDefvar\undefined    \gdef\putwordDefvar{IdentifierExpression}\fi
 \ifx\putwordDefopt\undefined    \gdef\putwordDefopt{User Option}\fi
 \ifx\putwordDeffunc\undefined   \gdef\putwordDeffunc{Function}\fi
 
@@ -4203,7 +4203,7 @@ end
 \def\expandablevalue#1{%
   \expandafter\ifx\csname SET#1\endcsname\relax
     {[No value for ``#1'']}%
-    \message{Variable `#1', used in @value, is not set.}%
+    \message{IdentifierExpression `#1', used in @value, is not set.}%
   \else
     \csname SET#1\endcsname
   \fi

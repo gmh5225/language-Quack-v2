@@ -87,7 +87,7 @@ bool EnvironmentBuilder::visitAssignment(
   auto rhsType = exprTC.visitExpression(assignment.getRHS());
   assert(rhsType);
 
-  if (auto *ident = dynamic_cast<const Variable *>(&assignment.getLHS())) {
+  if (auto *ident = dynamic_cast<const IdentifierExpression *>(&assignment.getLHS())) {
     auto &var = ident->getVar().getName();
     if (!env.contains(var)) {
       scope.insert({var, rhsType});

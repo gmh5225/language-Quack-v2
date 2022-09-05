@@ -30,7 +30,7 @@ msgstr "Funktion"
 
 #: examples/c/bistromathic/parse.y:151
 msgid "variable"
-msgstr "Variable"
+msgstr "IdentifierExpression"
 
 #: examples/c/bistromathic/parse.y:365
 msgid "%@: syntax error"
@@ -742,7 +742,7 @@ msgstr ""
 #: src/muscle-tab.c:530
 #, c-format
 msgid "%%define variable %s redefined"
-msgstr "%%define-Variable %s noch einmal definiert"
+msgstr "%%define-IdentifierExpression %s noch einmal definiert"
 
 #: src/muscle-tab.c:533 src/symtab.c:344
 msgid "previous definition"
@@ -751,32 +751,32 @@ msgstr "vorhergehende Definition"
 #: src/muscle-tab.c:592 src/muscle-tab.c:693 src/muscle-tab.c:752
 #, c-format
 msgid "%s: undefined %%define variable %s"
-msgstr "%s: undefinierte %%define-Variable %s"
+msgstr "%s: undefinierte %%define-IdentifierExpression %s"
 
 #: src/muscle-tab.c:626
 #, c-format
 msgid "%%define variable '%s' requires '{...}' values"
-msgstr "%%define-Variable %s benötigt „{...}“-Werte"
+msgstr "%%define-IdentifierExpression %s benötigt „{...}“-Werte"
 
 #: src/muscle-tab.c:631
 #, c-format
 msgid "%%define variable '%s' requires keyword values"
-msgstr "%%define-Variable %s benötigt Schlüsselwort-Werte"
+msgstr "%%define-IdentifierExpression %s benötigt Schlüsselwort-Werte"
 
 #: src/muscle-tab.c:636
 #, c-format
 msgid "%%define variable '%s' requires '\"...\"' values"
-msgstr "%%define-Variable %s benötigt „\"...\"“-Werte"
+msgstr "%%define-IdentifierExpression %s benötigt „\"...\"“-Werte"
 
 #: src/muscle-tab.c:687
 #, c-format
 msgid "invalid value for %%define Boolean variable %s"
-msgstr "ungültiger Wert für Boole’sche %%define-Variable %s"
+msgstr "ungültiger Wert für Boole’sche %%define-IdentifierExpression %s"
 
 #: src/muscle-tab.c:740
 #, c-format
 msgid "invalid value for %%define variable %s: %s"
-msgstr "ungültiger Wert für %%define-Variable %s: %s"
+msgstr "ungültiger Wert für %%define-IdentifierExpression %s: %s"
 
 #: src/muscle-tab.c:744
 #, c-format

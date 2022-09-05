@@ -1,0 +1,8 @@
+// RUN: %quick %s | %file-check %s
+
+class B(a: Integer) {}
+class A(a: Integer) extends B {
+    B(a);
+}
+
+// CHECK:
