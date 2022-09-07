@@ -15,7 +15,32 @@ static inline llvm::Type *ptr(llvm::Type *t) {
   return llvm::PointerType::get(t, 0);
 }
 
-static std::unique_ptr<ObjectType> buildObjectType(llvm::Module &module,
+static void updateMethodTable(
+    llvm::StringMap<std::pair<int, llvm::FunctionType *>> &methodTable,
+    const llvm::SmallVector<std::pair<StringRef, FunctionType *>, 4>
+        &newMethods,
+    llvm::StructType *vtable) {
+  auto numCurMethods = methodTable.size();
+  for (auto &p : newMethods) {
+    if (methodTable.count(p.first)) {
+      // update fn ptr
+      auto &idx = methodTable[p.first].first;
+      methodTable[p.first] = {idx, p.second};
+    } else {
+      methodTable.insert({p.first, {numCurMethods++, p.second}});
+    }
+  }
+
+  std::vector<Type *> ordered_vtable(methodTable.size());
+  for (auto &p : methodTable) {
+    ordered_vtable[p.second.first] = ptr(p.second.second);
+  }
+
+  vtable->setBody(ordered_vtable);
+}
+
+static std::unique_ptr<ObjectType> buildObjectType(LLVMTypeRegistry &tr,
+                                                   llvm::Module &module,
                                                    llvm::StructType *type,
                                                    llvm::Type *strType) {
   auto &cntx = module.getContext();
@@ -29,27 +54,74 @@ static std::unique_ptr<ObjectType> buildObjectType(llvm::Module &module,
 
   auto eqFn = llvm::FunctionType::get(llvm::Type::getInt8Ty(cntx),
                                       {ptr(type), ptr(type)}, false);
-  auto strFn = llvm::FunctionType::get(strType, {ptr(type)}, false);
+  auto neFn = llvm::FunctionType::get(llvm::Type::getInt8Ty(cntx),
+                                      {ptr(type), ptr(type)}, false);
+  auto strFn = llvm::FunctionType::get(ptr(strType), {ptr(type)}, false);
   auto delFn =
       llvm::FunctionType::get(llvm::Type::getVoidTy(cntx), {ptr(type)}, false);
   vtable->setBody({ptr(eqFn), ptr(strFn), ptr(delFn)});
 
-  llvm::MapVector<StringRef, FunctionType *> methodTable;
-  methodTable.insert({"Object__eq__Object", eqFn});
-  methodTable.insert({"Object__str__", strFn});
-  methodTable.insert({"Object__del__", delFn});
+  llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable;
+  int cntr = 0;
+  methodTable.insert({"__eq__Object", {cntr++, eqFn}});
+  methodTable.insert({"__ne__Object", {cntr++, neFn}});
+  methodTable.insert({"__str__", {cntr++, strFn}});
+  methodTable.insert({"__del__", {cntr++, delFn}});
+  updateMethodTable(methodTable, {}, vtable);
 
   FunctionType *constructorTy = FunctionType::get(ptr(type), {}, false);
   auto *constructor = Function::Create(
       constructorTy, GlobalValue::ExternalLinkage, "Object_create", module);
   constructor->setCallingConv(CallingConv::C);
 
-  return std::make_unique<ObjectType>(module, type, std::move(methodTable));
+  return std::make_unique<ObjectType>(tr, module, type, nullptr,
+                                      std::move(methodTable));
 }
 
-static std::unique_ptr<StringType> buildStringType(llvm::Module &module,
+static std::unique_ptr<NothingType>
+buildNothingType(LLVMTypeRegistry &tr, llvm::Module &module,
+                 llvm::StructType *type, llvm::StructType *objType,
+                 llvm::Type *strType, const ObjectType *super) {
+  auto &cntx = module.getContext();
+  auto *vtable = llvm::StructType::create(cntx, "Nothing_vtable");
+  std::vector<llvm::Type *> bodyTypes;
+  bodyTypes.push_back(ptr(vtable));
+  for (unsigned i = 1, end = objType->getNumElements(); i < end; i++) {
+    bodyTypes.push_back(objType->getElementType(i));
+  }
+  bodyTypes.push_back(llvm::Type::getInt8PtrTy(cntx));
+  type->setBody(bodyTypes);
+
+  auto strFn = llvm::FunctionType::get(ptr(strType), {ptr(type)}, false);
+  auto delFn =
+      llvm::FunctionType::get(llvm::Type::getVoidTy(cntx), {ptr(type)}, false);
+  auto eqFn = llvm::FunctionType::get(llvm::Type::getInt8Ty(cntx),
+                                      {ptr(type), ptr(type)}, false);
+  auto neFn = eqFn;
+
+  llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable =
+      super->getMethodTable();
+  llvm::SmallVector<std::pair<StringRef, FunctionType *>, 4> newMethods = {
+      {"__str__", strFn},
+      {"__del__", delFn},
+      {"__eq__Nothing", eqFn},
+      {"__ne__Nothing", neFn}};
+
+  updateMethodTable(methodTable, newMethods, vtable);
+
+  FunctionType *constructorTy = FunctionType::get(ptr(type), {}, false);
+  auto *constructor = Function::Create(
+      constructorTy, GlobalValue::ExternalLinkage, "Nothing_create", module);
+  constructor->setCallingConv(CallingConv::C);
+  return std::make_unique<NothingType>(tr, module, type, super,
+                                       std::move(methodTable));
+}
+
+static std::unique_ptr<StringType> buildStringType(LLVMTypeRegistry &tr,
+                                                   llvm::Module &module,
                                                    llvm::StructType *type,
-                                                   llvm::StructType *objType) {
+                                                   llvm::StructType *objType,
+                                                   const ObjectType *super) {
   auto &cntx = module.getContext();
   auto *vtable = llvm::StructType::create(cntx, "String_vtable");
   std::vector<llvm::Type *> bodyTypes;
@@ -62,55 +134,34 @@ static std::unique_ptr<StringType> buildStringType(llvm::Module &module,
 
   auto eqFn = llvm::FunctionType::get(llvm::Type::getInt8Ty(cntx),
                                       {ptr(type), ptr(type)}, false);
-  auto strFn = llvm::FunctionType::get(objType, {ptr(type)}, false);
+  auto neFn = llvm::FunctionType::get(llvm::Type::getInt8Ty(cntx),
+                                      {ptr(type), ptr(type)}, false);
+  auto strFn = llvm::FunctionType::get(ptr(type), {ptr(type)}, false);
   auto delFn =
       llvm::FunctionType::get(llvm::Type::getVoidTy(cntx), {ptr(type)}, false);
+  auto addFn =
+      llvm::FunctionType::get(ptr(type), {ptr(type), ptr(type)}, false);
 
-  vtable->setBody({ptr(eqFn), ptr(strFn), ptr(delFn)});
+  //  vtable->setBody({ptr(eqFn), ptr(strFn), ptr(delFn), ptr(addFn)});
 
-  llvm::MapVector<StringRef, FunctionType *> methodTable;
-  methodTable.insert({"String__eq__String", eqFn});
-  methodTable.insert({"String__str__", strFn});
-  methodTable.insert({"String__del__", delFn});
+  llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable =
+      super->getMethodTable();
+  llvm::SmallVector<std::pair<StringRef, FunctionType *>, 4> newMethods = {
+      {"__eq__String", eqFn},
+      {"__ne__String", neFn},
+      {"__str__", strFn},
+      {"__del__", delFn},
+      {"__add__String", addFn}};
+
+  updateMethodTable(methodTable, newMethods, vtable);
+
   FunctionType *constructorTy =
       FunctionType::get(ptr(type), {llvm::Type::getInt8PtrTy(cntx)}, false);
   auto *constructor = Function::Create(
       constructorTy, GlobalValue::ExternalLinkage, "String_create", module);
   constructor->setCallingConv(CallingConv::C);
-  return std::make_unique<StringType>(module, type, std::move(methodTable));
-}
-
-static void buildBuiltinComplexTypes(llvm::Module &module) {
-  auto &cntx = module.getContext();
-  auto *vtable = llvm::StructType::create(cntx);
-  auto *type =
-      llvm::StructType::get(cntx,
-                            {ptr(vtable), llvm::IntegerType::getInt32Ty(cntx),
-                             llvm::IntegerType::getInt32Ty(cntx)},
-                            false);
-
-  auto *stringType = llvm::StructType::get(cntx);
-
-  auto eqFn =
-      llvm::FunctionType::get(llvm::Type::getInt8Ty(cntx), {type, type}, false);
-  auto strFn = llvm::FunctionType::get(stringType, {type}, false);
-  auto delFn =
-      llvm::FunctionType::get(llvm::Type::getVoidTy(cntx), {type}, false);
-  vtable->setBody({ptr(eqFn), ptr(strFn), ptr(delFn)});
-
-  llvm::MapVector<StringRef, FunctionType *> methodTable;
-  methodTable.insert({"Object__eq__Object", eqFn});
-  methodTable.insert({"Object__str__", strFn});
-  methodTable.insert({"Object__del__", delFn});
-}
-
-template <typename T>
-static void registerPrimitive(llvm::Module &module,
-                              DenseMap<llvm::Type *, IRType *> &typemap,
-                              StringMap<std::unique_ptr<IRType>> &stringmap) {
-  auto t = std::make_unique<T>(module.getContext());
-  typemap[t->getType()] = t.get();
-  stringmap[t->getName()] = std::move(t);
+  return std::make_unique<StringType>(tr, module, type, super,
+                                      std::move(methodTable));
 }
 
 template <typename T>
@@ -122,18 +173,25 @@ static void registerType(std::unique_ptr<T> t,
 }
 
 LLVMTypeRegistry::LLVMTypeRegistry(llvm::Module &module) : module(module) {
-  registerPrimitive<IntType>(module, typemap, stringmap);
-  registerPrimitive<FloatType>(module, typemap, stringmap);
-  registerPrimitive<BoolType>(module, typemap, stringmap);
-
   auto *objStruct = llvm::StructType::create(module.getContext(), "Object");
+  auto *nothingStruct =
+      llvm::StructType::create(module.getContext(), "Nothing");
   auto *strStruct = llvm::StructType::create(module.getContext(), "String");
-  auto objectType = buildObjectType(module, objStruct, strStruct);
-  auto stringType = buildStringType(module, strStruct, objStruct);
+
+  auto intType = std::make_unique<IntType>(module.getContext());
+  auto floatType = std::make_unique<FloatType>(module.getContext());
+  auto boolType = std::make_unique<BoolType>(module.getContext());
+  auto objectType = buildObjectType(*this, module, objStruct, strStruct);
+  auto stringType =
+      buildStringType(*this, module, strStruct, objStruct, objectType.get());
+  auto nothingType = buildNothingType(*this, module, nothingStruct, objStruct,
+                                      strStruct, objectType.get());
+  registerType(std::move(intType), typemap, stringmap);
+  registerType(std::move(floatType), typemap, stringmap);
+  registerType(std::move(boolType), typemap, stringmap);
   registerType(std::move(objectType), typemap, stringmap);
+  registerType(std::move(nothingType), typemap, stringmap);
   registerType(std::move(stringType), typemap, stringmap);
-  //  registerComplex<StringType>(module, typemap, stringmap);
-  //  registerPrimitive<StringType>(module, typemap, stringmap);
 }
 
 IRType *LLVMTypeRegistry::get(type::QType *qtype) {
@@ -157,54 +215,9 @@ void LLVMTypeRegistry::dump(llvm::raw_ostream &out) {
   }
 
   out << "TypeMap: \n";
-  for (auto &p: typemap) {
+  for (auto &p : typemap) {
     out << "\t{" << p.getFirst() << ", " << p.getSecond()->getName() << "}\n";
   }
-}
-
-/// Common dispatches for int/float types
-/// creates instructions for primitive operations
-static inline llvm::Value *IntOrFloatDispatch(llvm::IRBuilder<> &b,
-                                              const char *method,
-                                              llvm::Value *self,
-                                              llvm::ArrayRef<Value *> args) {
-  auto method_is = [&](const char *other) {
-    return std::strcmp(method, other) == 0;
-  };
-  assert(args.size() <= 1 && "binary/unary operator");
-  if (args.empty()) {
-    if (method_is(op::UnaryOperator[op::NEG])) {
-      if (self->getType()->isIntegerTy())
-        return b.CreateSub(b.getInt64(0), self);
-      else
-        return b.CreateMul(llvm::ConstantFP::get(b.getDoubleTy(), -1.0), self);
-    }
-  }
-
-  auto arg = args.back();
-  if (method_is(op::ArithmeticOperator[op::ADD])) {
-    return b.CreateAdd(self, arg);
-  } else if (method_is(op::ArithmeticOperator[op::SUB])) {
-    return b.CreateSub(self, arg);
-  } else if (method_is(op::ArithmeticOperator[op::MUL])) {
-    return b.CreateMul(self, arg);
-  } else if (method_is(op::ArithmeticOperator[op::DIV])) {
-    return b.CreateSDiv(self, arg);
-  } else if (method_is(op::ComparisonOperator[op::LE])) {
-    return b.CreateICmpSLE(self, arg);
-  } else if (method_is(op::ComparisonOperator[op::LT])) {
-    return b.CreateICmpSLT(self, arg);
-  } else if (method_is(op::ComparisonOperator[op::GE])) {
-    return b.CreateICmpSGE(self, arg);
-  } else if (method_is(op::ComparisonOperator[op::GT])) {
-    return b.CreateICmpSGT(self, arg);
-  } else if (method_is(op::ComparisonOperator[op::NE])) {
-    return b.CreateICmpNE(self, arg);
-  } else if (method_is(op::ComparisonOperator[op::EQ])) {
-    return b.CreateICmpEQ(self, arg);
-  }
-  assert(false && "we shouldn't get here");
-  return nullptr;
 }
 
 /// Handles method calls of an integer object
@@ -320,8 +333,27 @@ llvm::Value *BoolType::dispatch(llvm::IRBuilder<> &b, const char *method,
 llvm::Value *ComplexType::dispatch(IRBuilder<> &b, const char *method,
                                    llvm::Value *self,
                                    llvm::ArrayRef<llvm::Value *> args,
-                                   llvm::Module *module) {
-  return nullptr;
+                                   llvm::Module *) {
+  // loading the vtable
+  auto vtableAddr = b.CreateStructGEP(self, 0);
+  auto vtable = b.CreateLoad(vtableAddr);
+
+  std::string mangledMethod = method;
+  for (auto arg : args) {
+    mangledMethod += tr.get(arg->getType())->getName();
+  }
+
+  // loading the method
+  assert(methodTable.count(mangledMethod) &&
+         "method must exist in method table -- bug");
+  int idx = methodTable[mangledMethod].first;
+  auto fnAddr = b.CreateStructGEP(vtable, idx);
+  auto fn = b.CreateLoad(fnAddr);
+
+  // calling the method
+  SmallVector<Value *, 4> newArgs(args.begin(), args.end());
+  newArgs.insert(newArgs.begin(), self);
+  return b.CreateCall(fn, newArgs);
 }
 
 llvm::Value *ComplexType::instantiate(IRBuilder<> &b, Value *lvalue,
@@ -333,16 +365,15 @@ llvm::Value *ComplexType::instantiate(IRBuilder<> &b, Value *lvalue,
 }
 
 llvm::Value *ComplexType::alloc(IRBuilder<> &b) {
-  static llvm::Type *ptrType = b.getInt8PtrTy();
-  auto val = b.CreateAlloca(ptrType);
+  auto val = b.CreateAlloca(getType());
   val->setAlignment(MaybeAlign(8));
   return val;
 }
 
 std::unique_ptr<ComplexType> ComplexType::create(
-    Module &module, llvm::StringRef name, ComplexType *super,
-    llvm::ArrayRef<llvm::Type *> members,
-    llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable) {
+    LLVMTypeRegistry &tr, Module &module, llvm::StringRef name,
+    ComplexType *super, llvm::ArrayRef<llvm::Type *> members,
+    llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable) {
   std::vector<llvm::Type *> allMembers;
   auto *superType = super->llvmType;
 
@@ -362,8 +393,8 @@ std::unique_ptr<ComplexType> ComplexType::create(
   //    }
   //  }
 
-  return std::unique_ptr<ComplexType>(
-      new ComplexType(module, nullptr, methodTable, name));
+  return std::unique_ptr<ComplexType>(new ComplexType(
+      tr, module, nullptr, super, std::move(methodTable), name));
 }
 
 /// Creates a 'store' instruction

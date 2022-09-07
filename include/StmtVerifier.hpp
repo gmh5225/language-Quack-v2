@@ -15,6 +15,7 @@ namespace sema {
 /// their legality
 /// ===-------------------------------------------------------------------=== //
 class StmtVerifier : public ASTVisitor<StmtVerifier, bool> {
+  std::fstream &file;
   const CompoundStmt &cmpStmt;
   sema::Env &env;
   type::QTypeDB &tdb;
@@ -25,14 +26,15 @@ class StmtVerifier : public ASTVisitor<StmtVerifier, bool> {
   sema::ExprTypeChecker exprTC;
 
 public:
-  StmtVerifier(const CompoundStmt &cmpStmt, sema::Env &env,
-                  type::QType *parentType = nullptr,
-                  type::QType *returnType = nullptr, bool isConstructor = false)
-      : cmpStmt(cmpStmt), env(env), tdb(type::QTypeDB::get()), parentType(parentType),
-        returnType(returnType), isConstructor(isConstructor), exprTC(tdb, env) {}
+  StmtVerifier(std::fstream &file, const CompoundStmt &cmpStmt, sema::Env &env,
+               type::QType *parentType = nullptr,
+               type::QType *returnType = nullptr, bool isConstructor = false)
+      : file(file), cmpStmt(cmpStmt), env(env), tdb(type::QTypeDB::get()),
+        parentType(parentType), returnType(returnType),
+        isConstructor(isConstructor), exprTC(file, tdb, env) {}
 
   // only visits statements
-  bool visitExpression(const ast::Expression&) = delete;
+  bool visitExpression(const ast::Expression &) = delete;
 #define EXPR_NODE_HANDLER(NODE) bool visit##NODE(const ast::NODE &) = delete;
 #define STMT_NODE_HANDLER(NODE) bool visit##NODE(const ast::NODE &);
 #include "ASTNodes.def"

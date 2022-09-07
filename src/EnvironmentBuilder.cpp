@@ -107,8 +107,8 @@ bool EnvironmentBuilder::visitAssignment(
   return true;
 }
 
-sema::Scope &EnvironmentBuilder::update(const CompoundStmt &body, Env &env) {
-  EnvironmentBuilder envBuilder(env);
+sema::Scope &EnvironmentBuilder::update(const CompoundStmt &body, Env &env, std::fstream &file) {
+  EnvironmentBuilder envBuilder(file, env);
   envBuilder.visitCompoundStmt(body);
   return env.back();
 }

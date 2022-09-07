@@ -12,78 +12,64 @@ namespace quick::type {
 /// The following functions register builtin types in the type data base upon
 /// initialization
 
+
+/// Registers Nothing
+static void buildObjectType(QTypeDB &db) {
+  auto *objType = db.getObjectType();
+  auto *boolType = db.getBoolType();
+  auto *strType = db.getStringType();
+  objType->insertMethod(op::ComparisonOperator[op::EQ], boolType, {{objType, "other"}});
+  objType->insertMethod(op::ComparisonOperator[op::NE], boolType, {{objType, "other"}});
+  objType->insertMethod("__str__", strType, {});
+}
+
 /// Registers Boolean
-static void registerBoolType(QTypeDB &db) {
-  auto *boolType = db.registerNewType(BoolStr, nullptr);
-  auto &methodTable = boolType->getMethods();
-
-  methodTable.insert(
-      {op::ComparisonOperator[op::EQ],
-                      QMethod(boolType, {QVarDecl{boolType, "other"}},
-                                              boolType, op::ComparisonOperator[op::EQ])});
-  methodTable.insert(
-      {op::ComparisonOperator[op::NE],
-                      QMethod(boolType, {QVarDecl{boolType, "other"}},
-                                              boolType, op::ComparisonOperator[op::NE])});
-
-  methodTable.insert(
-      {op::UnaryOperator[op::NEG],
-       QMethod(boolType, {}, boolType, op::UnaryOperator[op::NEG])});
-
-  methodTable.insert(
-      {op::UnaryOperator[op::NOT],
-       QMethod(boolType, {}, boolType, op::UnaryOperator[op::NOT])});
+static void buildBoolType(QTypeDB &db) {
+  auto *boolType = db.getBoolType();
+  auto *strType = db.getStringType();
+  boolType->insertMethod(op::ComparisonOperator[op::EQ], boolType, {{boolType, "other"}});
+  boolType->insertMethod(op::ComparisonOperator[op::NE], boolType, {{boolType, "other"}});
+  boolType->insertMethod("__str__", strType, {});
+  boolType->insertMethod(op::UnaryOperator[op::NOT], boolType, {});
 }
 
 /// Registers Nothing
-static void registerNothingType(QTypeDB &db) {
+static void buildNothingType(QTypeDB &db) {
   auto *boolType = db.getBoolType();
-  auto *nothingType = db.registerNewType(NothingStr, nullptr);
-  auto &methodTable = nothingType->getMethods();
-
-  methodTable.insert({op::ComparisonOperator[op::EQ],
-                      QMethod(nothingType, {QVarDecl{nothingType, "other"}},
-                             boolType, op::ComparisonOperator[op::EQ])});
-  methodTable.insert({op::ComparisonOperator[op::NE],
-                      QMethod(nothingType, {QVarDecl{nothingType, "other"}},
-                             boolType, op::ComparisonOperator[op::NE])});
-  methodTable.insert(
-      {op::UnaryOperator[op::NOT],
-       QMethod(boolType, {}, boolType, op::UnaryOperator[op::NOT])});
+  auto *nothingType = db.getNothingType();
+  auto *strType = db.getStringType();
+  nothingType->insertMethod(op::ComparisonOperator[op::EQ], boolType, {{nothingType, "other"}});
+  nothingType->insertMethod(op::ComparisonOperator[op::NE], boolType, {{nothingType, "other"}});
+  nothingType->insertMethod("__str__", strType, {});
 }
 
 /// Registers Integer
-static void registerIntegerType(QTypeDB &db) {
+static void buildIntegerType(QTypeDB &db) {
   auto *boolType = db.getBoolType();
-  auto *intType = db.registerNewType(IntegerStr, nullptr);
+  auto *intType = db.getIntegerType();
   auto &methodTable = intType->getMethods();
 
   // Integer supports all arithmetic operations
   for (const auto &op : op::ArithmeticOperator) {
-    methodTable.insert(
-        {op, QMethod(intType, {QVarDecl{intType, "other"}}, intType, op)});
+    intType->insertMethod(op, intType, {{intType, "other"}});
   }
 
   // Integer supports all comparison operations
   for (const auto &op : op::ComparisonOperator) {
-    methodTable.insert(
-        {op, QMethod(intType, {QVarDecl{intType, "other"}}, boolType, op)});
+    intType->insertMethod(op, boolType, {{intType, "other"}});
   }
 
-  methodTable.insert(
-      {op::UnaryOperator[op::NEG],
-       QMethod(intType, {}, intType, op::UnaryOperator[op::NEG])});
+  intType->insertMethod(op::UnaryOperator[op::NEG], intType, {});
 }
 
 /// Registers Float
-static void registerFloatType(QTypeDB &db) {
-  auto *floatType = db.registerNewType(FloatStr, nullptr);
+static void buildFloatType(QTypeDB &db) {
+  auto *floatType = db.getFloatType();
   auto &methodTable = floatType->getMethods();
 
   // Float supports all arithmetic operations
   for (const auto &op : op::ArithmeticOperator) {
-    methodTable.insert(
-        {op, QMethod(floatType, {QVarDecl{floatType, "other"}}, floatType, op)});
+    floatType->insertMethod(op, floatType, {{floatType, "other"}});
   }
 
   // Bool type must be registered before int
@@ -91,44 +77,39 @@ static void registerFloatType(QTypeDB &db) {
 
   // Float supports all comparison operations
   for (const auto &op : op::ComparisonOperator) {
-    methodTable.insert(
-        {op, QMethod(floatType, {QVarDecl{floatType, "other"}}, boolType, op)});
+    floatType->insertMethod(op, boolType, {{floatType, "other"}});
   }
 
-  methodTable.insert(
-      {op::UnaryOperator[op::NEG],
-       QMethod(floatType, {}, floatType, op::UnaryOperator[op::NEG])});
+  floatType->insertMethod(op::UnaryOperator[op::NEG], floatType, {});
 }
 
 /// Registers String
-static void registerStringType(QTypeDB &db) {
-  auto *objType = db.getObjectType();
+static void buildStringType(QTypeDB &db) {
   auto *boolType = db.getBoolType();
-  auto *strType = db.registerNewType(StringStr, objType);
-  auto &methodTable = strType->getMethods();
-
-  methodTable.insert(
-      {op::ArithmeticOperator[op::ADD],
-                      QMethod(strType, {QVarDecl{strType, "other"}},
-                                               strType, op::ArithmeticOperator[op::ADD])});
-  methodTable.insert(
-      {op::ComparisonOperator[op::EQ],
-                      QMethod(strType, {QVarDecl{strType, "other"}},
-                                              boolType, op::ComparisonOperator[op::EQ])});
-  methodTable.insert(
-      {op::ComparisonOperator[op::NE],
-                      QMethod(strType, {QVarDecl{strType, "other"}},
-                                              boolType, op::ComparisonOperator[op::NE])});
+  auto *strType = db.getStringType();
+  strType->insertMethod(op::ComparisonOperator[op::EQ], boolType, {{strType, "other"}});
+  strType->insertMethod(op::ComparisonOperator[op::NE], boolType, {{strType, "other"}});
+  strType->insertMethod("__str__", strType, {});
+  strType->insertMethod(op::ArithmeticOperator[op::ADD], strType, {{strType, "other"}});
 }
 
 /// Initialize the data base and register builtin types
 QTypeDB::QTypeDB() {
-  this->registerNewType(ObjectStr, nullptr);
-  registerBoolType(*this);
-  registerNothingType(*this);
-  registerIntegerType(*this);
-  registerFloatType(*this);
-  registerStringType(*this);
+  // registering builtin types
+  auto *obj = registerNewType(ObjectStr, nullptr);
+  registerNewType(BoolStr, obj);
+  registerNewType(IntegerStr, obj);
+  registerNewType(FloatStr, obj);
+  registerNewType(NothingStr, obj);
+  registerNewType(StringStr, obj);
+  
+  // building builtin types method tables
+  buildObjectType(*this);
+  buildBoolType(*this);
+  buildNothingType(*this);
+  buildIntegerType(*this);
+  buildFloatType(*this);
+  buildStringType(*this);
 }
 
 QType *QTypeDB::getObjectType() const { return this->at(ObjectStr).get(); }
@@ -142,23 +123,6 @@ QType *QTypeDB::getBoolType() const { return this->at(BoolStr).get(); }
 QType *QTypeDB::getStringType() const { return this->at(StringStr).get(); }
 
 QType *QTypeDB::getNothingType() const { return this->at(NothingStr).get(); }
-
-bool QType::operator==(const QType &other) { return name == other.name; }
-
-bool QType::operator!=(const QType &other) { return !(*this == other); }
-
-const QMethod *QType::lookUpMethod(llvm::StringRef mname) const {
-  if (!methods.count(mname))
-    return nullptr;
-
-  return &methods.find(mname)->second;
-}
-const QType *QType::lookUpMember(llvm::StringRef mname) const {
-  if (!members.count(mname))
-    return nullptr;
-
-  return members.find(mname)->second;
-}
 
 QType *QTypeDB::registerNewType(const std::string &name, QType *parent) {
   assert(this->find(name) == this->end() && "Type is already registered");

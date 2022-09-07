@@ -71,11 +71,11 @@ public:
   enum class Kind { Override, New, Constructor };
   QMethod(QType *type, llvm::ArrayRef<QVarDecl> actuals, QType *retType,
           llvm::StringRef name, Kind kind = Kind::New)
-      : type(type), actuals(actuals.begin(), actuals.end()),
+      : type(type), formals(actuals.begin(), actuals.end()),
         returnType(retType), name(name), kind(kind) {}
   bool operator==(const QMethod &);
 
-  const llvm::SmallVector<QVarDecl, 6> &getActuals() const { return actuals; }
+  const llvm::SmallVector<QVarDecl, 6> &getFormals() const { return formals; }
   QType *getReturnType() const { return returnType; }
   std::string getName() const { return name; }
   QType *getType() const { return type; }
@@ -84,7 +84,7 @@ public:
   std::unique_ptr<json::JSONNode> toJson();
 
 private:
-  llvm::SmallVector<QVarDecl, 6> actuals;
+  llvm::SmallVector<QVarDecl, 6> formals;
   QType *returnType;
   std::string name;
   QType *type;
@@ -97,8 +97,11 @@ private:
 class QType {
   QType *parent;
   std::string name;
-  llvm::MapVector<llvm::StringRef, QType *> members;
-  llvm::MapVector<llvm::StringRef, QMethod> methods;
+  using MembersTable = llvm::MapVector<llvm::StringRef, QType *>;
+  MembersTable members;
+  using MethodTable = llvm::StringMap<std::pair<int, std::unique_ptr<QMethod>>>;
+  MethodTable methods;
+  std::string mangleName(llvm::StringRef mname, llvm::ArrayRef<QType *> argTypes) const;
 
 public:
   QType(QType *parent, llvm::StringRef name) : parent(parent), name(name) {}
@@ -108,8 +111,8 @@ public:
   // Getters
   QType *getParent() { return parent; }
   const std::string &getName() const { return name; }
-  llvm::MapVector<llvm::StringRef, QType *> &getMembers() { return members; }
-  llvm::MapVector<llvm::StringRef, QMethod> &getMethods() { return methods; }
+  MembersTable &getMembers() { return members; }
+  MethodTable &getMethods() { return methods; }
 
   // Builds types members and methods
   bool insertMethod(const std::string &name, QType *retType,
@@ -119,7 +122,7 @@ public:
   // Utility
   QType *lowestCommonAncestor(const QType *) const;
   bool isDescendentOf(const QType *) const;
-  const QMethod *lookUpMethod(llvm::StringRef) const;
+  const QMethod *lookUpMethod(llvm::StringRef, llvm::ArrayRef<QType *> argTypes) const;
   const QType *lookUpMember(llvm::StringRef) const;
   std::unique_ptr<json::JSONNode> toJson();
 };

@@ -23,7 +23,8 @@ AST_NODES
   EXPR_NODE_HANDLER(FloatLiteral)                                              \
   EXPR_NODE_HANDLER(BoolLiteral)                                               \
   EXPR_NODE_HANDLER(StringLiteral)                                             \
-  EXPR_NODE_HANDLER(IdentifierExpression)                                                  \
+  EXPR_NODE_HANDLER(NothingLiteral)                                            \
+  EXPR_NODE_HANDLER(IdentifierExpression)                                      \
   EXPR_NODE_HANDLER(BinaryOperator)                                            \
   EXPR_NODE_HANDLER(UnaryOperator)                                             \
   EXPR_NODE_HANDLER(Call)                                                      \
@@ -44,7 +45,10 @@ AST_NODES
   STMT_NODE_HANDLER(Return)                                                    \
   STMT_NODE_HANDLER(If)                                                        \
   STMT_NODE_HANDLER(While)                                                     \
-  STMT_NODE_HANDLER(PrintStatement)
+  STMT_NODE_HANDLER(PrintStatement)                                            \
+  STMT_NODE_HANDLER(TypeSwitch)                                                \
+  STMT_NODE_HANDLER(TypeSwitchCase)                                            \
+  STMT_NODE_HANDLER(TypeAlternatives)
 
 AST_NODES
 #undef AST_NODES

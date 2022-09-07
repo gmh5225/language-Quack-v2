@@ -43,7 +43,7 @@ class TranslationUnit : public ASTNode {
 public:
   TranslationUnit(Location loc, std::unique_ptr<Classes> classes,
                   std::unique_ptr<CompoundStmt> compoundStmt)
-      : ASTNode(std::move(loc)), _classes(std::move(classes)),
+      : ASTNode(loc), _classes(std::move(classes)),
         _compoundStmt(std::move(compoundStmt)) {}
 
   const CompoundStmt &getCompoundStmt() const { return *_compoundStmt; }
@@ -62,13 +62,15 @@ public:
     Return,
     If,
     While,
-    Print
+    Print,
+    TypeSwitch,
+    TypeSwitchCase
   };
 
   inline Kind getKind() const { return _kind; }
 
 protected:
-  Statement(Location loc, Kind kind) : ASTNode(std::move(loc)), _kind(kind) {}
+  Statement(Location loc, Kind kind) : ASTNode(loc), _kind(kind) {}
 
 private:
   Kind _kind;
@@ -101,13 +103,14 @@ public:
     IntegerLiteral,
     FloatLiteral,
     BoolLiteral,
+    NothingLiteral,
     StringLiteral
   };
 
   inline Kind getKind() const { return _kind; }
 
 protected:
-  Expression(Location loc, Kind kind) : ASTNode(std::move(loc)), _kind(kind) {}
+  Expression(Location loc, Kind kind) : ASTNode(loc), _kind(kind) {}
 
 private:
   Kind _kind;
@@ -190,7 +193,7 @@ class Identifier final : public ASTNode {
 
 public:
   Identifier(Location loc, const std::string &name)
-      : ASTNode(std::move(loc)), _name(name){};
+      : ASTNode(loc), _name(name){};
 
   inline const std::string &getName() const { return _name; }
 };
@@ -366,6 +369,15 @@ public:
 };
 
 /// ===-------------------------------------------------------------------=== //
+/// NothingLiteral -- None
+/// ===-------------------------------------------------------------------=== //
+class NothingLiteral final : public Expression {
+public:
+  explicit NothingLiteral(Location loc)
+      : Expression(loc, Expression::Kind::NothingLiteral) {}
+};
+
+/// ===-------------------------------------------------------------------=== //
 /// StringLiteral
 /// ===-------------------------------------------------------------------=== //
 class StringLiteral final : public Expression, public Literal<std::string> {
@@ -530,12 +542,54 @@ class While final : public Statement {
 
 public:
   While(Location loc, std::unique_ptr<Expression> cond,
-        std::unique_ptr<CompoundStmt> stmnts)
+        std::unique_ptr<CompoundStmt> stmts)
       : Statement(loc, Statement::Kind::While), _cond(std::move(cond)),
-        _block(std::move(stmnts)) {}
+        _block(std::move(stmts)) {}
 
   inline const Expression &getCond() const { return *_cond; }
   inline const CompoundStmt &getBlock() const { return *_block; }
+};
+
+/// ===-------------------------------------------------------------------=== //
+/// TypeSwitchCase - a case in type_switch statement
+/// ===-------------------------------------------------------------------=== //
+class TypeSwitchCase final : public Statement {
+  std::unique_ptr<Identifier> _type;
+  std::unique_ptr<CompoundStmt> _block;
+
+public:
+  TypeSwitchCase(Location loc, std::unique_ptr<Identifier> type,
+                 std::unique_ptr<CompoundStmt> stmts)
+      : Statement(loc, Statement::Kind::TypeSwitchCase), _type(std::move(type)),
+        _block(std::move(stmts)) {}
+
+  inline const Identifier &getCaseType() const { return *_type; }
+  inline const CompoundStmt &getBlock() const { return *_block; }
+};
+
+/// ===-------------------------------------------------------------------=== //
+/// TypeAlternatives - sequence of type cases
+/// ===-------------------------------------------------------------------=== //
+class TypeAlternatives : public Sequence<TypeSwitchCase>, public ASTNode {
+public:
+  explicit TypeAlternatives(const Location &loc) : ASTNode(loc) {}
+};
+
+/// ===-------------------------------------------------------------------=== //
+/// TypeSwitch - a type_switch statement
+/// ===-------------------------------------------------------------------=== //
+class TypeSwitch final : public Statement {
+  std::unique_ptr<LValue> _value;
+  std::unique_ptr<TypeAlternatives> _cases;
+
+public:
+  TypeSwitch(Location loc, std::unique_ptr<LValue> value,
+             std::unique_ptr<TypeAlternatives> alts)
+      : Statement(loc, Statement::Kind::TypeSwitch), _value(std::move(value)),
+        _cases(std::move(alts)) {}
+
+  inline const LValue &getValue() const { return *_value; }
+  inline const TypeAlternatives &getCases() const { return *_cases; }
 };
 
 } // namespace quick::ast

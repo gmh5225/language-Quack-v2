@@ -28,13 +28,13 @@ class ExprCodeGen : public ast::ASTVisitor<ExprCodeGen, llvm::Value *> {
   LLVMTypeRegistry &typeRegistery;
   LLVMEnv &llvmEnv;
   type::QTypeDB &tdb;
-  sema::ExprTypeChecker exprTC;
+//  sema::ExprTypeChecker exprTC;
 
 public:
   ExprCodeGen(llvm::Module &module, llvm::IRBuilder<> &b, LLVMTypeRegistry &tr,
               sema::Env &env, LLVMEnv &llvmEnv)
       : module(module), builder(b), llvmCntx(b.getContext()), typeRegistery(tr),
-        llvmEnv(llvmEnv), tdb(type::QTypeDB::get()), exprTC(tdb, env) {}
+        llvmEnv(llvmEnv), tdb(type::QTypeDB::get()) {}
   llvm::Value *visitTranslationUnit(const TranslationUnit &) = delete;
   llvm::Value *visitStatement(const Statement &) = delete;
 #define STMT_NODE_HANDLER(NODE) llvm::Value *visit##NODE(const NODE &) = delete;
@@ -58,7 +58,7 @@ class FnCodeGen : public ASTVisitor<FnCodeGen, bool> {
   type::QType *parentType; // the type that the compound statement is in the
                            // environment of
   sema::Env env;
-  sema::ExprTypeChecker exprTC;
+//  sema::ExprTypeChecker exprTC;
 
 public:
   FnCodeGen(llvm::IRBuilder<> &builder, llvm::Module &module,
@@ -66,7 +66,7 @@ public:
             type::QType *parentType = nullptr, llvm::StringRef fnName = MainFn)
       : fnName(fnName), module(module), builder(builder), tr(tr),
         exprCG(module, builder, tr, env, llvmEnv), fnBody(cmpStmt),
-        tdb(type::QTypeDB::get()), parentType(parentType), exprTC(tdb, env) {}
+        tdb(type::QTypeDB::get()), parentType(parentType) {}
 
   bool visitTranslationUnit(const TranslationUnit &) = delete;
   bool visitExpression(const Expression &) = delete;

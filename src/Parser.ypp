@@ -73,7 +73,7 @@
 %token <double> FLOAT
 %token <bool> BOOL
 %token <std::string> STRING_LIT
-
+%token <std::string> NONE
 %token <std::string> THIS
 %token <std::string> IDENT
 %token <std::string> WEAK
@@ -86,6 +86,8 @@
 %token <std::string> ELSE
 %token <std::string> WHILE
 %token <std::string> PRINT
+%token <std::string> TYPE_SWITCH
+%token <std::string> CASE
 
 %type <ptr<TranslationUnit>> translationUnit
 %type <ptr<Statement>> statement
@@ -123,7 +125,9 @@
 %type <ptr<Class>> class
 %type <ptr<Classes>> classes
 %type <ptr<Classes>> classesNonEmpty
-
+%type <ptr<TypeAlternatives>> typeAlts
+%type <ptr<TypeSwitchCase>> typeAlternative
+%type <ptr<TypeSwitch>> typeSwitchStmt
 %%
 
 %start translationUnit;
@@ -195,6 +199,7 @@ statement: ";"                      { ; }
     | ifStmt                        { $$ = std::move($1); }
     | whileStmt                     { $$ = std::move($1); }
     | PRINT args ";"                { $$ = std::make_unique<PrintStatement>(loc(@1, @3), std::move($2)); }
+    | typeSwitchStmt                { $$ = std::move($1); }
     ;
 
 relationalOperator:
@@ -296,6 +301,7 @@ primaryExpression:
       INT                                  { $$ = std::make_unique<IntegerLiteral>(loc(@1, @1), $1); }
     | FLOAT                                { $$ = std::make_unique<FloatLiteral>(loc(@1, @1), $1); }
     | BOOL                                 { $$ = std::make_unique<BoolLiteral>(loc(@1, @1), $1); }
+    | NONE                                 { $$ = std::make_unique<NothingLiteral>(loc(@1, @1)); }
     | STRING_LIT                           { $$ = std::make_unique<StringLiteral>(loc(@1, @1), $1); }
     | lvalueExpression                     { $$ = std::move($1); }
     ;
@@ -336,6 +342,16 @@ expression: relationalExpression                      { $$ = std::move($1); }
     | "(" expression ")"                              { $$ = std::move($2); }
     ;
 
+typeAlternative: CASE identifier ":" compoundStmt { $$ = std::make_unique<TypeSwitchCase>(loc(@1, @4), std::move($2), std::move($4)); }
+    ;
+
+typeAlts: %empty                                  { $$ = std::make_unique<TypeAlternatives>(loc(@$, @$)); }
+    | typeAlts typeAlternative                    { $$ = std::move($1);$$->push_back(std::move($2)); }
+    ;
+
+typeSwitchStmt: TYPE_SWITCH "(" lvalueExpression ")" "{" typeAlts "}"
+                            { $$ = std::make_unique<TypeSwitch>(loc(@1, @7), std::move($3), std::move($6)); }
+    ;
 %%
 
 void yy::parser::error (const location_type& l, const std::string& m) {

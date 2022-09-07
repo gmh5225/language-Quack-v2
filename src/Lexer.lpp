@@ -30,11 +30,14 @@ weak        weak
 return      return
 true        True
 false       False
+none        None
 if          if
 else        else
 elif        elif
 while       while
 print       print
+type_switch type_switch
+case        case
 id          [a-zA-Z][a-zA-Z_0-9]*
 int         [0-9]+
 float       ([0-9]+[.])?[0-9]+
@@ -89,6 +92,7 @@ comment     \/\/[^\n]*
 {class}    return yy::parser::make_CLASS (yytext, loc);
 {def}      return yy::parser::make_DEF (yytext, loc);
 {return}   return yy::parser::make_RETURN (yytext, loc);
+{none}     return yy::parser::make_NONE (yytext, loc);
 {true}     return yy::parser::make_BOOL (true, loc);
 {false}    return yy::parser::make_BOOL (false, loc);
 {if}       return yy::parser::make_IF (yytext, loc);
@@ -96,7 +100,9 @@ comment     \/\/[^\n]*
 {elif}     return yy::parser::make_ELIF (yytext, loc);
 {while}    return yy::parser::make_WHILE (yytext, loc);
 {print}    return yy::parser::make_PRINT (yytext, loc);
+{type_switch} return yy::parser::make_TYPE_SWITCH (yytext, loc);
 {id}       return yy::parser::make_IDENT (yytext, loc);
+{case}     return yy::parser::make_CASE (yytext, loc);
 {string_lit} return yy::parser::make_STRING_LIT (yytext, loc);
 .          {
              throw yy::parser::syntax_error

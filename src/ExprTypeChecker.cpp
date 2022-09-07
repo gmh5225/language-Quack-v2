@@ -25,6 +25,10 @@ type::QType *ExprTypeChecker::visitStringLiteral(const StringLiteral &) {
   return tdb.getStringType();
 }
 
+type::QType *ExprTypeChecker::visitNothingLiteral(const NothingLiteral &) {
+  return tdb.getNothingType();
+}
+
 type::QType *ExprTypeChecker::visitBinaryOperator(const BinaryOperator &binOp) {
   auto *lhsType = visitExpression(binOp.getLHS());
   if (!lhsType)
@@ -35,26 +39,28 @@ type::QType *ExprTypeChecker::visitBinaryOperator(const BinaryOperator &binOp) {
     return nullptr;
 
   auto checkCall = [&](const char *m) -> type::QType * {
-    if (const auto *method = lhsType->lookUpMethod(m)) {
-      auto &args = method->getActuals();
+    if (const auto *method = lhsType->lookUpMethod(m, {rhsType})) {
+      auto &args = method->getFormals();
       if (args.size() != 1) {
-        logError(binOp, "expected 1 argument to the binary operator");
+        logError(file, binOp.getLocation(),
+                 "expected 1 argument to the binary operator");
         return nullptr;
       }
 
       auto *argType = args.back().type;
       if (argType != rhsType && !rhsType->isDescendentOf(argType)) {
-        logError(binOp, "can't use argument of type <" + argType->getName() +
-                            "> where type <" + rhsType->getName() +
-                            "> is expected.");
+        logError(file, binOp.getLocation(),
+                 "can't use argument of type <" + rhsType->getName() +
+                     "> where type <" + argType->getName() + "> is expected.");
         return nullptr;
       }
 
       return method->getReturnType();
     } else {
-      logError(binOp, std::string("method <") + m +
-                          "> is not defined for type <" + lhsType->getName() +
-                          ">");
+      logError(file, binOp.getLocation(),
+               std::string("method <") + m + "> with parameters <" +
+                   rhsType->getName() + "> is not defined for type <" +
+                   lhsType->getName() + ">");
       return nullptr;
     }
   };
@@ -93,15 +99,16 @@ type::QType *ExprTypeChecker::visitUnaryOperator(const UnaryOperator &unOp) {
     return nullptr;
 
   auto checkUnOp = [&](const char *op) -> type::QType * {
-    if (const auto *method = type->lookUpMethod(op)) {
-      if (!method->getActuals().empty()) {
-        logError(unOp, "Unary operator doesn't take any arguments");
+    if (const auto *method = type->lookUpMethod(op, {})) {
+      if (!method->getFormals().empty()) {
+        logError(file, unOp.getLocation(),
+                 "Unary operator doesn't take any arguments");
         return nullptr;
       }
 
       return method->getReturnType();
     }
-    logError(unOp,
+    logError(file, unOp.getLocation(),
              "Type '" + type->getName() + "' has no operator '" + op + "'");
     return nullptr;
   };
@@ -122,12 +129,14 @@ type::QType *ExprTypeChecker::visitMemberAccess(const MemberAccess &) {
   return nullptr;
 }
 
-type::QType *ExprTypeChecker::visitIdentifierExpression(const IdentifierExpression &lvalue) {
+type::QType *
+ExprTypeChecker::visitIdentifierExpression(const IdentifierExpression &lvalue) {
   if (auto t = env.lookup(lvalue.getVar().getName()))
     return t;
   else {
-    logError(lvalue, "IdentifierExpression <" + lvalue.getVar().getName() +
-                         "> not declared in current scope");
+    logError(file, lvalue.getLocation(),
+             "IdentifierExpression <" + lvalue.getVar().getName() +
+                 "> not declared in current scope");
     return nullptr;
   }
 }

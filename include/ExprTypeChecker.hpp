@@ -19,12 +19,13 @@ namespace sema {
 /// An expression visitor that evaluates the type of an expression.
 /// ===-------------------------------------------------------------------=== //
 class ExprTypeChecker : public ASTVisitor<ExprTypeChecker, type::QType *> {
+  std::fstream &file;
   type::QTypeDB &tdb;
   const Env &env;
 
 public:
-  ExprTypeChecker(type::QTypeDB &tdb, Env &env)
-      : tdb(tdb), env(env) {
+  ExprTypeChecker(std::fstream &file, type::QTypeDB &tdb, Env &env)
+      : file(file), tdb(tdb), env(env) {
   }
   type::QType *visitStatement(const Statement &) = delete;
   type::QType *visitTranslationUnit(const TranslationUnit &) = delete;

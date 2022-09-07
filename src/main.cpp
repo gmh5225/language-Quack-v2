@@ -61,8 +61,10 @@ public:
         cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(
             DL.getGlobalPrefix())));
     SymbolMap map;
-    map[Mangle("String_create")] = JITEvaluatedSymbol(
-        pointerToJITTargetAddress(&String_create), JITSymbolFlags());
+    registerRuntimeFunctions([&](const std::string &sym, void *addr) {
+      map[Mangle(sym)] = JITEvaluatedSymbol(
+          pointerToJITTargetAddress(addr), JITSymbolFlags());
+    });
     cantFail(MainJD.define(absoluteSymbols(map)));
   }
 
@@ -143,7 +145,6 @@ public:
     ExitOnErr(engine->addModule(std::move(module)));
     auto MainFn = ExitOnErr(engine->lookup("main"));
     auto FnPtr = (intptr_t)MainFn.getAddress();
-    //    String_create("");
     auto Fn = (int (*)())FnPtr;
     return Fn();
   }
@@ -193,53 +194,6 @@ int main(int argc, char **argv) {
     printVisitor.visitTranslationUnit(root);
     std::exit(0);
   }
-
-  //  {
-  //    LLVMContext cntx;
-  //    llvm::TargetOptions Opts;
-  //    InitializeNativeTarget();
-  //    InitializeNativeTargetAsmPrinter();
-  //    auto JTMB = llvm::orc::JITTargetMachineBuilder::detectHost();
-  //    if(!JTMB) {
-  //      std::cerr << "failed to make jit target machine builder\n";
-  //      std::exit(1);
-  //    }
-  //
-  //    auto jitb = JTMB.get();
-  //    auto tm = JTMB->createTargetMachine();
-  //    if (!tm) {
-  //      std::cerr << "failed to make target machine\n";
-  //      std::exit(1);
-  //    }
-  //    auto module = quick::compiler::CodeGen(root, cntx, Filename);
-  //    if (!module)
-  //      std::exit(1);
-  //
-  //    auto *modulePtr = module.get();
-  //    std::unique_ptr<llvm::RTDyldMemoryManager> MemMgr(new
-  //    llvm::SectionMemoryManager()); llvm::EngineBuilder
-  //    factory(std::move(module));
-  //    factory.setEngineKind(llvm::EngineKind::JIT);
-  //    factory.setTargetOptions(Opts);
-  //    factory.setMCJITMemoryManager(std::move(MemMgr));
-  //    std::string err;
-  //    factory.setErrorStr(&err);
-  //    auto executionEngine =
-  //    std::unique_ptr<llvm::ExecutionEngine>(factory.create(tm->get())); if
-  //    (!executionEngine) {
-  //      llvm::errs() << err << "\n";
-  //      std::exit(1);
-  //    }
-  //
-  //    modulePtr->setDataLayout(executionEngine->getDataLayout());
-  //
-  //    executionEngine->finalizeObject();
-  //    auto fn = executionEngine->FindFunctionNamed("main");
-  //    auto *callable = (int (*)())executionEngine->getPointerToFunction(fn);
-  //    callable();
-  //    std::exit(0);
-  ////    executionEngine->addGlobalMapping()
-  //  }
 
   LLVMContext cntx;
   quick::compiler::Driver compilerDriver;

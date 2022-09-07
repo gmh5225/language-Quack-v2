@@ -104,24 +104,29 @@ public:
                         llvm::Module *module = nullptr) override;
 };
 
+class LLVMTypeRegistry; // forward ref
+
 /// ===-------------------------------------------------------------------=== //
 /// ComplexType - has zero or more members and zero or more methods
 /// ===-------------------------------------------------------------------=== //
 class ComplexType : public IRType {
 protected:
+  LLVMTypeRegistry &tr;
   llvm::Module &module;
   llvm::StructType *llvmType;
-  llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable;
+  const ComplexType *super;
+  llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable;
   std::string name;
 
-  ComplexType(
-      llvm::Module &module, llvm::StructType *llvmType,
-      llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable,
-      llvm::StringRef name)
-      : IRType(module.getContext()), module(module), llvmType(llvmType),
-        methodTable(std::move(methodTable)), name(name) {}
+  ComplexType(LLVMTypeRegistry &tr, llvm::Module &module,
+              llvm::StructType *llvmType, const ComplexType *super,
+              llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable,
+              llvm::StringRef name)
+      : IRType(module.getContext()), tr(tr), module(module), llvmType(llvmType),
+        super(super), methodTable(std::move(methodTable)), name(name) {}
 
 public:
+  const auto &getMethodTable() const { return methodTable; }
   llvm::Type *getType() override { return llvm::PointerType::get(llvmType, 0); }
   llvm::StringRef getName() override { return name; }
   llvm::Value *dispatch(llvm::IRBuilder<> &b, const char *method,
@@ -133,9 +138,9 @@ public:
                            llvm::Module *module) override;
 
   static std::unique_ptr<ComplexType>
-  create(llvm::Module &module, llvm::StringRef name, ComplexType *super,
-         llvm::ArrayRef<llvm::Type *> members,
-         llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable);
+  create(LLVMTypeRegistry &tr, llvm::Module &module, llvm::StringRef name,
+         ComplexType *super, llvm::ArrayRef<llvm::Type *> members,
+         llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable);
 };
 
 /// ===-------------------------------------------------------------------=== //
@@ -144,16 +149,29 @@ public:
 /// ===-------------------------------------------------------------------=== //
 class ObjectType : public ComplexType {
 public:
-  ObjectType(llvm::Module &module, llvm::StructType *llvmType,
-             llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable)
-      : ComplexType(module, llvmType, std::move(methodTable), "Object") {}
+  ObjectType(LLVMTypeRegistry &tr, llvm::Module &module,
+             llvm::StructType *llvmType, const ComplexType *super,
+             llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable)
+      : ComplexType(tr, module, llvmType, super, std::move(methodTable), "Object") {
+  }
+};
+
+class NothingType : public ComplexType {
+public:
+  NothingType(LLVMTypeRegistry &tr, llvm::Module &module,
+             llvm::StructType *llvmType, const ComplexType *super,
+             llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable)
+      : ComplexType(tr, module, llvmType, super, std::move(methodTable), "Nothing") {
+  }
 };
 
 class StringType : public ComplexType {
 public:
-  StringType(llvm::Module &module, llvm::StructType *llvmType,
-             llvm::MapVector<llvm::StringRef, llvm::FunctionType *> methodTable)
-      : ComplexType(module, llvmType, std::move(methodTable), "String") {}
+  StringType(LLVMTypeRegistry &tr, llvm::Module &module,
+             llvm::StructType *llvmType, const ComplexType *super,
+             llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable)
+      : ComplexType(tr, module, llvmType, super, std::move(methodTable), "String") {
+  }
 };
 
 /// ===-------------------------------------------------------------------=== //

@@ -49,7 +49,7 @@ bool TypeChecker::verify() {
   }
 
   // Checking main
-  StmtVerifier stmtTypeChecker(tu.getCompoundStmt(), environment, nullptr,
+  StmtVerifier stmtTypeChecker(file, tu.getCompoundStmt(), environment, nullptr,
                                tdb.getIntegerType());
   if (!stmtTypeChecker.isLegal())
     numErrors++;

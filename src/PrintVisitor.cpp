@@ -42,6 +42,11 @@ void PrintVisitor::visitStringLiteral(
          stringLiteral.get() + ")");
 }
 
+void PrintVisitor::visitNothingLiteral(
+    const NothingLiteral &)  {
+  emitln("None");
+}
+
 void PrintVisitor::visitIdentifier(const Identifier &identifier)  {
   emitln("Identifier "
          "(" +
@@ -230,4 +235,15 @@ void PrintVisitor::visitPrintStatement(const quick::ast::PrintStatement &print) 
 
 void PrintVisitor::visitMemberAccess(
     const MemberAccess &memberAccess)  {}
+
+
+void PrintVisitor::visitTypeAlternatives(const ast::TypeAlternatives &) {
+}
+
+void PrintVisitor::visitTypeSwitch(const ast::TypeSwitch &) {
+}
+
+void PrintVisitor::visitTypeSwitchCase(const ast::TypeSwitchCase &) {
+}
+
 } // namespace quick::ast

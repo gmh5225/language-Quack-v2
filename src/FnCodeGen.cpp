@@ -58,14 +58,50 @@ llvm::Value *ExprCodeGen::visitBoolLiteral(const ast::BoolLiteral &boolean) {
                          builder.getInt64(boolean.get()));
 }
 
+std::string interpEscapeSeq(const char *str) {
+  std::stringstream ss;
+  for (; *str != '\0'; str++) {
+    if (*str == '\\') {
+      str++;
+      if (*str == '\0')
+        break;
+      char c = *str;
+      switch (c) {
+      case 'n':
+        ss << '\n';
+        break;
+      case 't':
+        ss << '\t';
+        break;
+      default:
+        ss << '\\';
+        ss << c;
+      }
+    } else if (*str != '\"') {
+      ss << *str;
+    }
+  }
+  return ss.str();
+}
+
 llvm::Value *ExprCodeGen::visitStringLiteral(const ast::StringLiteral &strLit) {
-  llvm::Value *str = builder.CreateGlobalStringPtr(strLit.get());
+  llvm::Value *str =
+      builder.CreateGlobalStringPtr(interpEscapeSeq(strLit.get().c_str()));
   Function *func = module.getFunction("String_create");
   if (!func) {
     logError("Link Error: function <String_create> not found");
     return nullptr;
   }
   return builder.CreateCall(func, {str});
+}
+
+llvm::Value *ExprCodeGen::visitNothingLiteral(const ast::NothingLiteral &) {
+  Function *func = module.getFunction("Nothing_create");
+  if (!func) {
+    logError("Link Error: function <Nothing_create> not found");
+    return nullptr;
+  }
+  return builder.CreateCall(func, {});
 }
 
 llvm::Value *ExprCodeGen::visitCall(const ast::Call &) { return nullptr; }
@@ -204,7 +240,7 @@ static void removeEmptyBB(IRBuilder<> &builder) {
 /// no terminator
 ///     ...
 bool FnCodeGen::visitIf(const If &ifStmt) {
-  // Creating necessary basic blocks
+  // Creating branching basic blocks
   auto &cntx = builder.getContext();
   auto fn = builder.GetInsertBlock()->getParent();
   llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(cntx, "if.then", fn);
@@ -266,12 +302,43 @@ bool FnCodeGen::visitIf(const If &ifStmt) {
 
         auto &f = pair.getSecond();
         auto &s = ElseEnv[var];
-        if (f->getType() != s->getType())
-          continue;
 
-        auto phi = builder.CreatePHI(f->getType(), 2);
-        phi->addIncoming(ElseEnv.lookup(var), &lastElseBB);
-        phi->addIncoming(ThenEnv.lookup(var), &lastThenBB);
+        type::QType *fType = nullptr, *sType = nullptr;
+        if (auto irType = tr.get(f->getType()->getPointerElementType())) {
+          fType = tdb.getType(irType->getName());
+        }
+
+        if (auto irType = tr.get(s->getType()->getPointerElementType())) {
+          sType = tdb.getType(irType->getName());
+        }
+
+        assert(sType && fType &&
+               "must be resolved and exist in tdb by this point -- bug");
+
+        auto lca = fType->lowestCommonAncestor(sType);
+        if (!lca)
+          continue ;
+
+        auto lcaLLVMType = tr.get(lca)->getType();
+        auto lcaPtr = llvm::PointerType::get(lcaLLVMType, 0);
+
+        auto phi = builder.CreatePHI(llvm::PointerType::get(lcaLLVMType, 0), 2);
+        auto thenVar = ThenEnv.lookup(var);
+        auto elseVar = ElseEnv.lookup(var);
+        if (lcaPtr != thenVar->getType()) {
+          llvm::IRBuilder<>::InsertPointGuard g(builder);
+          builder.SetInsertPoint(&lastThenBB.back());
+          thenVar = builder.CreateBitCast(thenVar, lcaPtr);
+        }
+
+        if (lcaPtr != elseVar->getType()) {
+          llvm::IRBuilder<>::InsertPointGuard g(builder);
+          builder.SetInsertPoint(&lastElseBB.back());
+          elseVar = builder.CreateBitCast(elseVar, lcaPtr);
+        }
+
+        phi->addIncoming(elseVar, &lastElseBB);
+        phi->addIncoming(thenVar, &lastThenBB);
         llvmEnv.back().insert({var, phi});
       }
     };
@@ -426,14 +493,28 @@ bool FnCodeGen::visitPrintStatement(const ast::PrintStatement &print) {
   SmallVector<Value *, 4> params;
   for (auto &expr : *print.getArgs()) {
     auto exprVal = exprCG.visitExpression(*expr);
-    params.push_back(exprVal);
     auto valType = exprVal->getType();
-    if (valType->isIntegerTy())
+    if (valType->isIntegerTy()) {
+      params.push_back(exprVal);
       ss << "%ld ";
-    else if (valType->isDoubleTy())
+    } else if (valType->isDoubleTy()) {
+      params.push_back(exprVal);
       ss << "%g ";
-    else
+    } else {
+      auto t = tr.get(exprVal->getType());
+      Value *string = exprVal;
+      if (t->getName() != "String")
+        string = t->dispatch(builder, "__str__", exprVal, {});
+
+      Function *getStringData =
+          getOrCreateFnSym("String_getData", module,
+                           llvm::Type::getInt8PtrTy(module.getContext()),
+                           {string->getType()}, false);
+      // getting the data of a string object
+      auto str = builder.CreateCall(getStringData, {string});
+      params.push_back(str);
       ss << "%s ";
+    }
   }
   ss << "\n";
   Value *globalFormatStr = builder.CreateGlobalStringPtr(ss.str());
@@ -476,6 +557,19 @@ bool FnCodeGen::generate() {
   removeEmptyBB(builder);
   return true;
 }
+
+bool FnCodeGen::visitTypeAlternatives(const ast::TypeAlternatives &) {
+  return false;
+}
+
+bool FnCodeGen::visitTypeSwitch(const ast::TypeSwitch &) {
+  return false;
+}
+
+bool FnCodeGen::visitTypeSwitchCase(const ast::TypeSwitchCase &) {
+  return false;
+}
+
 
 // bool FnCodeGen::visitUnaryOperator(const ast::UnaryOperator &unOp) {
 //   return false;

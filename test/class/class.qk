@@ -5,4 +5,5 @@ class A(a: Integer) extends B {
     B(a);
 }
 
-// CHECK:
+// CHECK: 1
+print 1;

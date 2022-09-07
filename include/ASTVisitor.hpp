@@ -67,6 +67,8 @@ public:
       DISPATCH(FloatLiteral, expression);
     case Expression::Kind::BoolLiteral:
       DISPATCH(BoolLiteral, expression);
+    case Expression::Kind::NothingLiteral:
+      DISPATCH(NothingLiteral, expression);
     case Expression::Kind::StringLiteral:
       DISPATCH(StringLiteral, expression);
     case Expression::Kind::Call:
@@ -92,6 +94,10 @@ public:
       DISPATCH(While, statement);
     case Statement::Kind::Print:
       DISPATCH(PrintStatement, statement);
+    case Statement::Kind::TypeSwitch:
+      DISPATCH(TypeSwitch, statement);
+    case Statement::Kind::TypeSwitchCase:
+      DISPATCH(TypeSwitchCase, statement);
     default:
       return RetType();
     }

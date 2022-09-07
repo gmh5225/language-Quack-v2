@@ -16,6 +16,7 @@ else()
     message(STATUS "llvm-lit: using ${LLVM_LIT_BIN}")
 endif()
 
+
 add_custom_target(check
         COMMAND ${LLVM_LIT_BIN} "${CMAKE_CURRENT_BINARY_DIR}" -v
         DEPENDS
