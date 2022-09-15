@@ -56,7 +56,7 @@ std::unique_ptr<JSONNode> QType::toJson() {
   if (!members.empty()) {
     auto mmL = make<ListNode>();
     for (auto &m : members) {
-      mmL->push_back(make<StringNode>(m.second->name));
+      mmL->push_back(make<StringNode>(m.first()));
     }
     t->insert({"members", std::move(mmL)});
   }
@@ -76,7 +76,8 @@ bool QType::insertMember(const QVarDecl &namedVar) {
   if (members.count(namedVar.name) != 0)
     return false;
 
-  members.insert({namedVar.name, namedVar.type});
+  auto id = members.size() + 1;
+  members.insert({namedVar.name, {id, namedVar.type}});
   return true;
 }
 
@@ -106,23 +107,27 @@ bool QType::insertMethod(const std::string &methodName, QType *retType,
   };
 
   QMethod::Kind kind = QMethod::Kind::New;
-  if (isConstructor())
+  if (isConstructor()) {
     kind = QMethod::Kind::Constructor;
-  else if (auto opt = isOverride()) {
-    auto *method = opt.getValue();
-    if (method->getFormals().size() != args.size())
-      return false;
-
-    for (auto [formal, arg] : llvm::zip(method->getFormals(), args)) {
-      if (formal.type != arg.type &&
-          !arg.type->isDescendentOf(formal.type))
+    constructor = std::make_unique<QMethod>(
+        this, args, retType, mName, kind);
+  } else {
+    if (auto opt = isOverride()) {
+      auto *method = opt.getValue();
+      if (method->getFormals().size() != args.size())
         return false;
+
+      for (auto [formal, arg] : llvm::zip(method->getFormals(), args)) {
+        if (formal.type != arg.type && !arg.type->isDescendentOf(formal.type))
+          return false;
+      }
+      kind = QMethod::Kind::Override;
     }
-    kind = QMethod::Kind::Override;
+    //  methods.insert({mName, QMethod(this, args, retType, mName, kind)});
+    methods[mName] = {methods.size(), std::make_unique<QMethod>(
+                                          this, args, retType, mName, kind)};
   }
 
-//  methods.insert({mName, QMethod(this, args, retType, mName, kind)});
-  methods[mName] = {methods.size(), std::make_unique<QMethod>(this, args, retType, mName, kind)};
   return true;
 }
 
@@ -151,19 +156,21 @@ bool QType::operator==(const QType &other) { return name == other.name; }
 
 bool QType::operator!=(const QType &other) { return !(*this == other); }
 
-std::string QType::mangleName(llvm::StringRef mname, llvm::ArrayRef<QType *> argTypes) const {
+std::string QType::mangleName(llvm::StringRef mname,
+                              llvm::ArrayRef<QType *> argTypes) const {
   std::string mangledName = mname;
-  for (auto t: argTypes) {
+  for (auto t : argTypes) {
     mangledName += t->getName();
   }
   return mangledName;
 }
 
-const QMethod *QType::lookUpMethod(llvm::StringRef mname, llvm::ArrayRef<QType *> argTypes) const {
+QMethod *QType::lookUpMethod(llvm::StringRef mname,
+                             llvm::ArrayRef<QType *> argTypes) {
   auto mangledName = mangleName(mname, argTypes);
   auto curType = this;
   QMethod *method = nullptr;
-  while(curType) {
+  while (curType) {
     if (curType->methods.count(mangledName) == 0)
       curType = curType->parent;
     else {
@@ -175,11 +182,15 @@ const QMethod *QType::lookUpMethod(llvm::StringRef mname, llvm::ArrayRef<QType *
   return method;
 }
 
-const QType *QType::lookUpMember(llvm::StringRef mname) const {
-  if (!members.count(mname))
-    return nullptr;
+QType *QType::lookUpMember(llvm::StringRef mname) {
+  QType *p = this;
+  while (p) {
+    if (p->members.count(mname))
+      return members.find(mname)->second.second;
 
-  return members.find(mname)->second;
+    p = p->parent;
+  }
+  return nullptr;
 }
 
 // class TypeRegisterer : public ast::ASTVisitor<TypeRegisterer, bool> {

@@ -22,7 +22,7 @@ void logError(std::fstream &file, const frontend::Location &loc, const std::stri
   std::cerr << fname << ": " << loc.toString() << ": " << message << std::endl;
   for(;curLine < loc.l_to + 1 && !file.eof(); curLine++) {
     std::getline(file, line);
-    std::cerr << "    " << curLine << ")    " << line;
+    std::cerr << "    " << curLine << ")    " << line << "\n";
   }
 
   std::cerr << "\n\n";

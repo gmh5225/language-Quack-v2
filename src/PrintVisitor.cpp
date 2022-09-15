@@ -236,14 +236,23 @@ void PrintVisitor::visitPrintStatement(const quick::ast::PrintStatement &print) 
 void PrintVisitor::visitMemberAccess(
     const MemberAccess &memberAccess)  {}
 
-
-void PrintVisitor::visitTypeAlternatives(const ast::TypeAlternatives &) {
+void PrintVisitor::visitTypeSwitch(const ast::TypeSwitch &typeSwitch) {
+  emitln("TypeSwitch");
+  indent(IndentationType::DiagBar);
+  for (auto &c: typeSwitch.getCases()) {
+    visitTypeSwitchCase(*c);
+  }
+  dedent();
 }
 
-void PrintVisitor::visitTypeSwitch(const ast::TypeSwitch &) {
-}
-
-void PrintVisitor::visitTypeSwitchCase(const ast::TypeSwitchCase &) {
+void PrintVisitor::visitTypeSwitchCase(const ast::TypeSwitchCase &typeSwitchCase) {
+  emitln("typeSwitchCase");
+  indent(IndentationType::DiagBar);
+  visitVarDecl(typeSwitchCase.getVarDecl());
+  indent(IndentationType::DiagBar);
+  visitCompoundStmt(typeSwitchCase.getBlock());
+  dedent();
+  dedent();
 }
 
 } // namespace quick::ast

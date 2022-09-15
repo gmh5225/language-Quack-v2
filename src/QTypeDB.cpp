@@ -12,14 +12,15 @@ namespace quick::type {
 /// The following functions register builtin types in the type data base upon
 /// initialization
 
-
 /// Registers Nothing
 static void buildObjectType(QTypeDB &db) {
   auto *objType = db.getObjectType();
   auto *boolType = db.getBoolType();
   auto *strType = db.getStringType();
-  objType->insertMethod(op::ComparisonOperator[op::EQ], boolType, {{objType, "other"}});
-  objType->insertMethod(op::ComparisonOperator[op::NE], boolType, {{objType, "other"}});
+  objType->insertMethod(op::ComparisonOperator[op::EQ], boolType,
+                        {{objType, "other"}});
+  objType->insertMethod(op::ComparisonOperator[op::NE], boolType,
+                        {{objType, "other"}});
   objType->insertMethod("__str__", strType, {});
 }
 
@@ -27,8 +28,10 @@ static void buildObjectType(QTypeDB &db) {
 static void buildBoolType(QTypeDB &db) {
   auto *boolType = db.getBoolType();
   auto *strType = db.getStringType();
-  boolType->insertMethod(op::ComparisonOperator[op::EQ], boolType, {{boolType, "other"}});
-  boolType->insertMethod(op::ComparisonOperator[op::NE], boolType, {{boolType, "other"}});
+  boolType->insertMethod(op::ComparisonOperator[op::EQ], boolType,
+                         {{boolType, "other"}});
+  boolType->insertMethod(op::ComparisonOperator[op::NE], boolType,
+                         {{boolType, "other"}});
   boolType->insertMethod("__str__", strType, {});
   boolType->insertMethod(op::UnaryOperator[op::NOT], boolType, {});
 }
@@ -38,8 +41,10 @@ static void buildNothingType(QTypeDB &db) {
   auto *boolType = db.getBoolType();
   auto *nothingType = db.getNothingType();
   auto *strType = db.getStringType();
-  nothingType->insertMethod(op::ComparisonOperator[op::EQ], boolType, {{nothingType, "other"}});
-  nothingType->insertMethod(op::ComparisonOperator[op::NE], boolType, {{nothingType, "other"}});
+  nothingType->insertMethod(op::ComparisonOperator[op::EQ], boolType,
+                            {{nothingType, "other"}});
+  nothingType->insertMethod(op::ComparisonOperator[op::NE], boolType,
+                            {{nothingType, "other"}});
   nothingType->insertMethod("__str__", strType, {});
 }
 
@@ -87,22 +92,25 @@ static void buildFloatType(QTypeDB &db) {
 static void buildStringType(QTypeDB &db) {
   auto *boolType = db.getBoolType();
   auto *strType = db.getStringType();
-  strType->insertMethod(op::ComparisonOperator[op::EQ], boolType, {{strType, "other"}});
-  strType->insertMethod(op::ComparisonOperator[op::NE], boolType, {{strType, "other"}});
+  strType->insertMethod(op::ComparisonOperator[op::EQ], boolType,
+                        {{strType, "other"}});
+  strType->insertMethod(op::ComparisonOperator[op::NE], boolType,
+                        {{strType, "other"}});
   strType->insertMethod("__str__", strType, {});
-  strType->insertMethod(op::ArithmeticOperator[op::ADD], strType, {{strType, "other"}});
+  strType->insertMethod(op::ArithmeticOperator[op::ADD], strType,
+                        {{strType, "other"}});
 }
 
 /// Initialize the data base and register builtin types
 QTypeDB::QTypeDB() {
   // registering builtin types
   auto *obj = registerNewType(ObjectStr, nullptr);
-  registerNewType(BoolStr, obj);
-  registerNewType(IntegerStr, obj);
-  registerNewType(FloatStr, obj);
+  registerNewType(BoolStr, nullptr);
+  registerNewType(IntegerStr, nullptr);
+  registerNewType(FloatStr, nullptr);
   registerNewType(NothingStr, obj);
   registerNewType(StringStr, obj);
-  
+
   // building builtin types method tables
   buildObjectType(*this);
   buildBoolType(*this);
@@ -146,4 +154,4 @@ QType *QTypeDB::getType(llvm::StringRef name) const {
   return this->at(name).get();
 }
 
-}
+} // namespace quick::type

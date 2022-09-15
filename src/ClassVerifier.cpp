@@ -6,18 +6,23 @@
 
 namespace quick::sema {
 
-bool ClassVerifier::hasCircularInheritance() {
-  auto *superIdent = theClass.getSuper();
-  if (!superIdent)
+bool ClassVerifier::hasRecursiveConstructor() {
+  auto isRecursiveCall = [&](const Call &call) {
+    if (auto *identExpr = call.getCallee().as_a<IdentifierExpression>()) {
+      if (identExpr->getVar().getName() == this->theClass.getClassIdent().getName())
+        return true;
+    }
     return false;
+  };
 
-  auto &superName = superIdent->getName();
-  auto *qtype = tdb.getType(superName);
-  auto &typeName = theClass.getClassIdent().getName();
-  while (qtype) {
-    if (qtype->getName() == typeName)
-      return true;
-    qtype = qtype->getParent();
+  auto &constructor = theClass.getConstructor();
+  for (auto &stmt : constructor.getBody()) {
+    if (auto valueStmt = stmt->as_a<ValueStmt>()) {
+      if (auto call = valueStmt->getExpr().as_a<Call>()) {
+        if (isRecursiveCall(*call))
+          return true;
+      }
+    }
   }
   return false;
 }
@@ -44,8 +49,8 @@ bool ClassVerifier::isSuperInitialized(const std::string &superName) {
 }
 
 bool ClassVerifier::verifyConstructor() {
-  if (hasCircularInheritance()) {
-    logError(file, theClass.getSuper()->getLocation(), "circular inheritance detected");
+  if (hasRecursiveConstructor()) {
+    logError(file, theClass.getConstructor().getLocation(), "recursive type constructor detected");
     return false;
   }
 
@@ -85,6 +90,7 @@ bool ClassVerifier::visitClass(const ast::Class &clss) {
 }
 
 bool ClassVerifier::verify() {
+
   return visitClass(theClass);
 }
 

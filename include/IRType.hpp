@@ -46,6 +46,7 @@ public:
   virtual llvm::Value *instantiate(llvm::IRBuilder<> &b, llvm::Value *lvalue,
                                    llvm::ArrayRef<llvm::Value *> args,
                                    llvm::Module *module = nullptr) = 0;
+  virtual llvm::StructType *getVtable() { return nullptr; }
   virtual ~IRType() = default;
 };
 
@@ -106,6 +107,7 @@ public:
 
 class LLVMTypeRegistry; // forward ref
 
+using MethodTable = type::Table<std::pair<llvm::FunctionType *, IRType *>>;
 /// ===-------------------------------------------------------------------=== //
 /// ComplexType - has zero or more members and zero or more methods
 /// ===-------------------------------------------------------------------=== //
@@ -114,20 +116,27 @@ protected:
   LLVMTypeRegistry &tr;
   llvm::Module &module;
   llvm::StructType *llvmType;
+  llvm::StructType *vtable;
   const ComplexType *super;
-  llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable;
   std::string name;
+  std::vector<std::string> mangledMethodNames;
+  MethodTable methodTable;
+  type::Table<llvm::Type *> memberTable;
 
   ComplexType(LLVMTypeRegistry &tr, llvm::Module &module,
               llvm::StructType *llvmType, const ComplexType *super,
-              llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable,
-              llvm::StringRef name)
+              MethodTable methodTable, llvm::StringRef name,
+              llvm::StructType *vtable, type::Table<llvm::Type *> members = {})
       : IRType(module.getContext()), tr(tr), module(module), llvmType(llvmType),
-        super(super), methodTable(std::move(methodTable)), name(name) {}
+        vtable(vtable), super(super), name(name),
+        methodTable(std::move(methodTable)), memberTable(std::move(members)) {}
 
 public:
-  const auto &getMethodTable() const { return methodTable; }
+  void setVTable(llvm::StructType *vt) { vtable = vt; }
+  void setMethodTable(MethodTable mt) { methodTable = std::move(mt); }
+  auto &getMethodTable() { return methodTable; }
   llvm::Type *getType() override { return llvm::PointerType::get(llvmType, 0); }
+  llvm::StructType *getStructType() { return llvmType; }
   llvm::StringRef getName() override { return name; }
   llvm::Value *dispatch(llvm::IRBuilder<> &b, const char *method,
                         llvm::Value *self, llvm::ArrayRef<llvm::Value *> args,
@@ -136,12 +145,20 @@ public:
   llvm::Value *instantiate(llvm::IRBuilder<> &b, llvm::Value *lvalue,
                            llvm::ArrayRef<llvm::Value *> args,
                            llvm::Module *module) override;
-
+  llvm::StructType *getVtable() override { return vtable; }
+  auto &getMembers() { return memberTable; }
   static std::unique_ptr<ComplexType>
   create(LLVMTypeRegistry &tr, llvm::Module &module, llvm::StringRef name,
-         ComplexType *super, llvm::ArrayRef<llvm::Type *> members,
-         llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable);
+         ComplexType *super, type::Table<llvm::Type *> members,
+         MethodTable methodTable = {},
+         llvm::StructType *vtable = nullptr);
 };
+
+void updateMethodTable(
+    codegen::IRType *type, MethodTable &methodTable,
+    const std::vector<std::pair<llvm::StringRef, llvm::FunctionType *>>
+        &newMethods,
+    llvm::StructType *vtable, llvm::StructType *superVtable);
 
 /// ===-------------------------------------------------------------------=== //
 /// ObjectType - the root of the Type hierarchy, every other type in Quick
@@ -151,27 +168,27 @@ class ObjectType : public ComplexType {
 public:
   ObjectType(LLVMTypeRegistry &tr, llvm::Module &module,
              llvm::StructType *llvmType, const ComplexType *super,
-             llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable)
-      : ComplexType(tr, module, llvmType, super, std::move(methodTable), "Object") {
-  }
+             MethodTable methodTable, llvm::StructType *vtable)
+      : ComplexType(tr, module, llvmType, super, std::move(methodTable),
+                    "Object", vtable) {}
 };
 
 class NothingType : public ComplexType {
 public:
   NothingType(LLVMTypeRegistry &tr, llvm::Module &module,
-             llvm::StructType *llvmType, const ComplexType *super,
-             llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable)
-      : ComplexType(tr, module, llvmType, super, std::move(methodTable), "Nothing") {
-  }
+              llvm::StructType *llvmType, const ComplexType *super,
+              MethodTable methodTable, llvm::StructType *vtable)
+      : ComplexType(tr, module, llvmType, super, std::move(methodTable),
+                    "Nothing", vtable) {}
 };
 
 class StringType : public ComplexType {
 public:
   StringType(LLVMTypeRegistry &tr, llvm::Module &module,
              llvm::StructType *llvmType, const ComplexType *super,
-             llvm::StringMap<std::pair<int, llvm::FunctionType *>> methodTable)
-      : ComplexType(tr, module, llvmType, super, std::move(methodTable), "String") {
-  }
+             MethodTable methodTable, llvm::StructType *vtable)
+      : ComplexType(tr, module, llvmType, super, std::move(methodTable),
+                    "String", vtable) {}
 };
 
 /// ===-------------------------------------------------------------------=== //
@@ -181,6 +198,7 @@ class LLVMTypeRegistry {
   llvm::Module &module;
   llvm::StringMap<std::unique_ptr<IRType>> stringmap;
   llvm::DenseMap<llvm::Type *, IRType *> typemap;
+  llvm::StructType *objectVTable; // vtable of object type, used for down cast
 
 public:
   explicit LLVMTypeRegistry(llvm::Module &module);
@@ -188,6 +206,12 @@ public:
   LLVMTypeRegistry &operator=(const LLVMTypeRegistry &) = delete;
   IRType *get(type::QType *qtype);
   IRType *get(llvm::Type *type);
+  IRType *get(llvm::StringRef typeName);
+  llvm::StructType *getObjectVtable() { return objectVTable; }
+  template <typename T> void registerType(std::unique_ptr<T> t) {
+    typemap[t->getType()] = t.get();
+    stringmap[t->getName()] = std::move(t);
+  }
   void dump(llvm::raw_ostream &out = llvm::errs());
 };
 

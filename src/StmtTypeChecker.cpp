@@ -2,6 +2,8 @@
 // Created by parsab on 6/14/22.
 //
 
+#include <memory>
+
 #include "StmtVerifier.hpp"
 
 namespace quick {
@@ -48,13 +50,14 @@ bool StmtVerifier::visitAssignment(const ast::Assignment &assignment) {
   if (!rhsType)
     return false;
 
-  if (auto *ident = dynamic_cast<const IdentifierExpression *>(&assignment.getLHS())) {
+  if (auto *ident =
+          dynamic_cast<const IdentifierExpression *>(&assignment.getLHS())) {
     auto &var = ident->getVar().getName();
     if (auto *varType = env.lookup(var)) {
       if (varType != rhsType && !rhsType->isDescendentOf(varType)) {
-        logError(file, assignment.getLocation(), "Conflict between rhs type <" +
-                                 rhsType->getName() + "> and variable type <" +
-                                 varType->getName() + ">");
+        logError(file, assignment.getLocation(),
+                 "Conflict between rhs type <" + rhsType->getName() +
+                     "> and variable type <" + varType->getName() + ">");
         return false;
       }
     } else {
@@ -68,26 +71,27 @@ bool StmtVerifier::visitAssignment(const ast::Assignment &assignment) {
 
     // Check if we have memory access right
     if (objType != parentType) {
-      logError(file, assignment.getLocation(), "Cannot access member of type <" +
-                               objType->getName() + "> in this scope");
+      logError(file, assignment.getLocation(),
+               "Cannot access member of type <" + objType->getName() +
+                   "> in this scope");
       return false;
     }
 
     auto *memberType = objType->lookUpMember(memAccess->getMember().getName());
     if (!memberType) {
       if (!isConstructor) {
-        logError(file, memAccess->getLocation(), "No such member <" +
-                                 memAccess->getMember().getName() +
-                                 ">. Cannot add member outside of constructor");
+        logError(file, memAccess->getLocation(),
+                 "No such member <" + memAccess->getMember().getName() +
+                     ">. Cannot add member outside of constructor");
         return false;
       }
       objType->insertMember(
           type::QVarDecl{rhsType, memAccess->getMember().getName()});
 
     } else if (memberType != rhsType || !rhsType->isDescendentOf(memberType)) {
-      logError(file, assignment.getLocation(), "Conflict between rhs type <" + rhsType->getName() +
-                               "> and lhs type <" + memberType->getName() +
-                               ">");
+      logError(file, assignment.getLocation(),
+               "Conflict between rhs type <" + rhsType->getName() +
+                   "> and lhs type <" + memberType->getName() + ">");
       return false;
     }
   }
@@ -99,7 +103,8 @@ bool StmtVerifier::visitStaticAssignment(
     const ast::StaticAssignment &assignment) {
   auto &decl = assignment.getDecl();
   if (decl.isMemberDecl() && !isConstructor) {
-    logError(file, decl.getLocation(), "Member declaration outside of a class constructor");
+    logError(file, decl.getLocation(),
+             "Member declaration outside of a class constructor");
     return false;
   }
 
@@ -109,7 +114,8 @@ bool StmtVerifier::visitStaticAssignment(
 
   auto lhsType = tdb.getType(decl.getType().getName());
   if (!lhsType) {
-    logError(file, decl.getLocation(), "No such type <" + decl.getType().getName() + ">");
+    logError(file, decl.getLocation(),
+             "No such type <" + decl.getType().getName() + ">");
     return false;
   }
 
@@ -123,18 +129,33 @@ bool StmtVerifier::visitStaticAssignment(
   if (decl.isMemberDecl()) {
     auto &memDecl = static_cast<const StaticMemberDecl &>(decl);
     auto &var = memDecl.getObject().getMember().getName();
-    auto *t = exprTC.visitExpression(memDecl.getObject());
-    if (t->getMembers().count(var)) {
-      logError(file, decl.getLocation(), "Member already declared");
-      return false;
+    if (auto *identExpr =
+            memDecl.getObject().getObject().as_a<IdentifierExpression>()) {
+      if (identExpr->getVarName() == "this" && isConstructor) {
+        auto *type = env.lookup("this");
+        assert(type);
+        auto *varType = tdb.getType(memDecl.getType().getName());
+        if (!varType) {
+          logError(file, memDecl.getLocation(), "type not found");
+          return false;
+        }
+        if (type->getMembers().count(var)) {
+          logError(file, decl.getLocation(), "Member already declared");
+          return false;
+        }
+        type->insertMember({varType, var});
+      } else {
+        logError(file, decl.getLocation(),
+                 "Cannot declare member outside of type definition");
+        return false;
+      }
     }
-    t->insertMember(type::QVarDecl{lhsType, var});
-
   } else {
     auto &varDecl = static_cast<const VarDecl &>(decl);
     auto &var = varDecl.getVar().getName();
     if (env.back().lookup(var)) {
-      logError(file, decl.getLocation(), "Redeclaration of variable <" + var + ">");
+      logError(file, decl.getLocation(),
+               "Redeclaration of variable <" + var + ">");
       return false;
     }
     env.back().insert({var, lhsType});
@@ -184,9 +205,10 @@ bool StmtVerifier::visitReturn(const ast::Return &returnStmt) {
         return false;
 
       if (retType != returnType && !retType->isDescendentOf(returnType)) {
-        logError(file, returnStmt.getLocation(), "Expected <" + returnType->getName() +
-                                 "> type to be returned but got <" +
-                                 retType->getName() + ">");
+        logError(file, returnStmt.getLocation(),
+                 "Expected <" + returnType->getName() +
+                     "> type to be returned but got <" + retType->getName() +
+                     ">");
         return false;
       }
     }
@@ -196,27 +218,62 @@ bool StmtVerifier::visitReturn(const ast::Return &returnStmt) {
 }
 
 bool StmtVerifier::visitPrintStatement(const ast::PrintStatement &printStmt) {
-  for (auto &expr: *printStmt.getArgs()) {
-    if(!exprTC.visitExpression(*expr))
+  for (auto &expr : *printStmt.getArgs()) {
+    if (!exprTC.visitExpression(*expr))
       return false;
   }
   return true;
 }
 
-bool StmtVerifier::visitTypeAlternatives(const ast::TypeAlternatives &) {
-  return false;
+bool StmtVerifier::visitTypeSwitch(const ast::TypeSwitch &typeSwitch) {
+  auto curType = exprTC.visitExpression(typeSwitch.getValue());
+  int numErrors = 0;
+  std::unique_ptr<Scope> mergeScope = nullptr;
+  for (auto &c : typeSwitch.getCases()) {
+    auto &typeName = c->getVarDecl().getType().getName();
+    auto cType = tdb.getType(typeName);
+    if (!cType) {
+      logError(file, c->getLocation(), "type <" + typeName + "> not found");
+      return false;
+    }
+
+    if (!cType->isDescendentOf(curType)) {
+      logError(file, c->getLocation(),
+               "type <" + typeName + "> is not a descendent of type <" +
+                   curType->getName() + ">");
+      return false;
+    }
+
+    auto &caseScope = env.addNewScope();
+    auto &varName = c->getVarDecl().getVar().getName();
+    caseScope.insert({varName, cType}); // temporarily adding variable
+                                        // to current scope
+    if (!visitTypeSwitchCase(*c))
+      numErrors++;
+    caseScope.erase(varName); // removing temporary variable
+    if (!mergeScope) {
+      mergeScope = std::make_unique<Scope>(caseScope);
+    } else {
+      mergeScope =
+          std::make_unique<Scope>(std::move(And(*mergeScope, caseScope)));
+    }
+    (void)env.popCurrentScope();
+  }
+  if (mergeScope)
+    env.mergeScope(*mergeScope);
+  return numErrors == 0;
 }
 
-bool StmtVerifier::visitTypeSwitch(const ast::TypeSwitch &) {
-  return false;
-}
-
-bool StmtVerifier::visitTypeSwitchCase(const ast::TypeSwitchCase &) {
-  return false;
+bool StmtVerifier::visitTypeSwitchCase(
+    const ast::TypeSwitchCase &typeSwitchCase) {
+  return visitCompoundStmt(typeSwitchCase.getBlock());
 }
 
 bool StmtVerifier::isLegal() {
-  (void)env.addNewScope();
+  auto &scope = env.addNewScope();
+  if (parentType) {
+    scope.insert({"this", parentType});
+  }
   auto res = visitCompoundStmt(cmpStmt);
   (void)env.popCurrentScope();
   return res;

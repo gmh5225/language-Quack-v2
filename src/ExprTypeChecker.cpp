@@ -123,10 +123,62 @@ type::QType *ExprTypeChecker::visitUnaryOperator(const UnaryOperator &unOp) {
   }
 }
 
-type::QType *ExprTypeChecker::visitCall(const Call &) { return nullptr; }
+type::QType *ExprTypeChecker::visitCall(const Call &call) {
+  // typechecking arguments
+  std::vector<type::QType *> argtypes;
+  for (auto &arg: call.getArgs()) {
+    auto argType = visitExpression(*arg);
+    if (!argType)
+      return nullptr;
+    argtypes.push_back(argType);
+  }
 
-type::QType *ExprTypeChecker::visitMemberAccess(const MemberAccess &) {
+  auto &callee = call.getCallee();
+  if (auto identExpr = callee.as_a<IdentifierExpression>()) {
+    // it has to be a constructor
+    auto type = tdb.getType(identExpr->getVarName());
+    if (!type) {
+      logError(file, call.getLocation(),
+               "calling a constructor of a type that doesn't exist <" +
+                   identExpr->getVarName() + ">");
+      return nullptr;
+    }
+
+    if (!type->getConstructor()) {
+      logError(file, call.getLocation(), "this type has no constructor <" + type->getName() + ">");
+      return nullptr;
+    }
+
+    return type;
+  } else if (auto memAccess = callee.as_a<MemberAccess>()) {
+    auto *objType = visitExpression(memAccess->getObject());
+    if (!objType)
+      return nullptr;
+
+    auto qMethod = objType->lookUpMethod(memAccess->getVarName(), argtypes);
+    if (!qMethod) {
+      logError(file, call.getLocation(), "method not found");
+      return nullptr;
+    }
+
+    return qMethod->getReturnType();
+  }
   return nullptr;
+}
+
+type::QType *
+ExprTypeChecker::visitMemberAccess(const MemberAccess &memberAccess) {
+  auto type = visitExpression(memberAccess.getObject());
+  if (!type)
+    return nullptr;
+
+  if (type->getMembers().count(memberAccess.getVarName()) == 0) {
+    logError(file, memberAccess.getLocation(),
+             "type <" + type->getName() + "> has no member <" +
+                 memberAccess.getVarName() + ">");
+    return nullptr;
+  }
+  return type->lookUpMember(memberAccess.getVarName());
 }
 
 type::QType *

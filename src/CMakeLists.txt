@@ -42,7 +42,9 @@ add_executable(
         QuickTokenizer.cpp
         ClassVerifier.cpp
         Runtime.cpp
-        Utils.cpp)
+        Utils.cpp
+        ClassCodeGen.cpp
+)
 
 set_target_properties(quick PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 target_link_libraries(quick ${llvm_libs} ${LLVM_LINK_COMPONENTS})

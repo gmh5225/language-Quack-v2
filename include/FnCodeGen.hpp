@@ -46,27 +46,14 @@ public:
 /// A statement visitor that generates code for every given function/method
 /// ===-------------------------------------------------------------------=== //
 class FnCodeGen : public ASTVisitor<FnCodeGen, bool> {
-  llvm::StringRef fnName;
-  llvm::Module &module;
-  llvm::IRBuilder<> &builder;
-  LLVMTypeRegistry &tr;
-  ExprCodeGen exprCG;
-  LLVMEnv llvmEnv;
-
-  const CompoundStmt &fnBody;
-  type::QTypeDB &tdb;
-  type::QType *parentType; // the type that the compound statement is in the
-                           // environment of
-  sema::Env env;
-//  sema::ExprTypeChecker exprTC;
-
 public:
+  using Args = llvm::SmallVector<std::pair<llvm::StringRef, Value *>, 4>;
   FnCodeGen(llvm::IRBuilder<> &builder, llvm::Module &module,
-            const ast::CompoundStmt &cmpStmt, LLVMTypeRegistry &tr,
-            type::QType *parentType = nullptr, llvm::StringRef fnName = MainFn)
-      : fnName(fnName), module(module), builder(builder), tr(tr),
+            const ast::CompoundStmt &cmpStmt, LLVMTypeRegistry &tr, LLVMEnv &llvmEnv,
+            type::QType *parentType = nullptr, llvm::StringRef fnName = MainFn, IRType *returnType = nullptr, Args args = {})
+      : fnName(fnName), module(module), builder(builder), tr(tr), llvmEnv(llvmEnv),
         exprCG(module, builder, tr, env, llvmEnv), fnBody(cmpStmt),
-        tdb(type::QTypeDB::get()), parentType(parentType) {}
+        tdb(type::QTypeDB::get()), parentType(parentType), retType(returnType), args(std::move(args)) {}
 
   bool visitTranslationUnit(const TranslationUnit &) = delete;
   bool visitExpression(const Expression &) = delete;
@@ -74,9 +61,37 @@ public:
 #define STMT_NODE_HANDLER(NODE) bool visit##NODE(const ast::NODE &);
 #include "ASTNodes.def"
 
+  auto &getExprCodeGen() { return exprCG; }
   bool generate();
   bool isMain() { return fnName == MainFn; }
+
+private:
+  llvm::StringRef fnName;
+  llvm::Module &module;
+  llvm::IRBuilder<> &builder;
+  LLVMTypeRegistry &tr;
+  LLVMEnv &llvmEnv;
+  ExprCodeGen exprCG;
+  Args args;
+  IRType *retType;
+
+  const CompoundStmt &fnBody;
+  type::QTypeDB &tdb;
+  type::QType *parentType; // the type that the compound statement is in the
+                           // environment of
+  sema::Env env;
+  //  sema::ExprTypeChecker exprTC;
 };
+
+
+Function *getOrCreateFnSym(const std::string &functionName,
+                           llvm::Module &module, llvm::Type *resultType,
+                           llvm::ArrayRef<Type *> params = {},
+                           bool isVarArgs = false);
+
+Function *getOrCreateFnSym(const std::string &functionName,
+                           llvm::Module &module, FunctionType *FuncTy,
+                           bool isVarArgs = false);
 
 } // namespace quick::codegen
 #endif // QUACK_FNCODEGEN_HPP

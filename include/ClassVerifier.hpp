@@ -21,7 +21,7 @@ class ClassVerifier : public ASTVisitor<ClassVerifier, bool> {
 
   bool isSuperInitialized(const std::string &);
   bool verifyConstructor();
-  bool hasCircularInheritance();
+  bool hasRecursiveConstructor();
 
 public:
   ClassVerifier(std::fstream &file, const Class &theClass)

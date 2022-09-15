@@ -9,20 +9,32 @@ using namespace llvm;
 
 namespace quick::codegen {
 
-static llvm::Value *getNoOp(llvm::Module *module, llvm::LLVMContext &cntx) {
-  auto *ftype = llvm::FunctionType::get(llvm::Type::getVoidTy(cntx), false);
-  static llvm::Value *noop = llvm::Function::Create(
-      ftype, llvm::Function::ExternalLinkage, "llvm.donothing", module);
-  return noop;
-}
+//static llvm::Value *getNoOp(llvm::Module *module, llvm::LLVMContext &cntx) {
+//  auto *ftype = llvm::FunctionType::get(llvm::Type::getVoidTy(cntx), false);
+//  static llvm::Value *noop = llvm::Function::Create(
+//      ftype, llvm::Function::ExternalLinkage, "llvm.donothing", module);
+//  return noop;
+//}
 
-static Function *getOrCreateFnSym(const char *functionName,
+Function *getOrCreateFnSym(const std::string &functionName,
                                   llvm::Module &module, llvm::Type *resultType,
-                                  llvm::ArrayRef<Type *> params = {},
-                                  bool isVarArgs = false) {
+                                  llvm::ArrayRef<Type *> params,
+                                  bool isVarArgs) {
   Function *func = module.getFunction(functionName);
   if (!func) {
     FunctionType *FuncTy = FunctionType::get(resultType, params, isVarArgs);
+    func = Function::Create(FuncTy, GlobalValue::ExternalLinkage, functionName,
+                            module);
+    func->setCallingConv(CallingConv::C);
+  }
+  return func;
+}
+
+Function *getOrCreateFnSym(const std::string &functionName,
+                           llvm::Module &module, FunctionType *FuncTy,
+                           bool isVarArgs) {
+  Function *func = module.getFunction(functionName);
+  if (!func) {
     func = Function::Create(FuncTy, GlobalValue::ExternalLinkage, functionName,
                             module);
     func->setCallingConv(CallingConv::C);
@@ -104,7 +116,26 @@ llvm::Value *ExprCodeGen::visitNothingLiteral(const ast::NothingLiteral &) {
   return builder.CreateCall(func, {});
 }
 
-llvm::Value *ExprCodeGen::visitCall(const ast::Call &) { return nullptr; }
+llvm::Value *ExprCodeGen::visitCall(const ast::Call &call) {
+  if (call.getCallee().getKind() == LValue::Kind::Ident) {
+    // maybe constructor
+    auto *ident = static_cast<const IdentifierExpression *>(&call.getCallee());
+    auto *irType = typeRegistery.get(ident->getVarName());
+    assert(irType);
+    // constructor
+    auto *constructor = getOrCreateFnSym(ident->getVarName() + "_create", module, nullptr, false);
+    std::vector<Value *> argVals;
+    for (auto &arg: call.getArgs()) {
+      auto *argVal = visitExpression(*arg);
+      assert(argVal);
+      argVals.push_back(argVal);
+    }
+    return builder.CreateCall(constructor, argVals);
+  } else {
+    // TODO
+    return nullptr;
+  }
+}
 
 llvm::Value *ExprCodeGen::visitIdentifierExpression(
     const ast::IdentifierExpression &lvalue) {
@@ -115,8 +146,17 @@ llvm::Value *ExprCodeGen::visitIdentifierExpression(
   return load;
 }
 
-llvm::Value *ExprCodeGen::visitMemberAccess(const ast::MemberAccess &) {
-  return nullptr;
+llvm::Value *ExprCodeGen::visitMemberAccess(const ast::MemberAccess &memberAccess) {
+  auto obj = visitExpression(memberAccess.getObject());
+  assert(obj);
+
+  auto &member = memberAccess.getVarName();
+  auto *irType = typeRegistery.get(obj->getType());
+  auto complexType = dynamic_cast<ComplexType *>(irType);
+  assert(complexType);
+  auto memberIdx = complexType->getMembers().lookup(member).first;
+  auto ptr = builder.CreateStructGEP(obj, memberIdx);
+  return builder.CreateLoad(ptr);
 }
 
 llvm::Value *ExprCodeGen::visitUnaryOperator(const ast::UnaryOperator &unOp) {
@@ -317,7 +357,7 @@ bool FnCodeGen::visitIf(const If &ifStmt) {
 
         auto lca = fType->lowestCommonAncestor(sType);
         if (!lca)
-          continue ;
+          continue;
 
         auto lcaLLVMType = tr.get(lca)->getType();
         auto lcaPtr = llvm::PointerType::get(lcaLLVMType, 0);
@@ -426,8 +466,14 @@ bool FnCodeGen::visitAssignment(const Assignment &assignment) {
     }
     return true;
   } else {
-    // TODO member access
-    return false;
+    auto *memAccess = static_cast<const MemberAccess *>(&assignment.getLHS());
+    auto val = exprCG.visitExpression(memAccess->getObject());
+    auto *irType = (ComplexType *)tr.get(PointerType::get(val->getType(), 0));
+    assert(irType);
+    auto idx = irType->getMembers()[memAccess->getVarName()].first;
+    auto ptr = builder.CreateStructGEP(val, idx);
+    builder.CreateStore(rhsLLVMVal, ptr);
+    return true;
   }
 }
 
@@ -453,9 +499,18 @@ bool FnCodeGen::visitStaticAssignment(const StaticAssignment &assignment) {
     llvmType->instantiate(builder, storage, {rhsLLVMVal});
     return true;
   } else {
-    // TODO
-    return false;
+    auto &decl = static_cast<const StaticMemberDecl&>(assignment.getDecl());
+    auto *thisObj = llvmEnv.lookup("this");
+    assert(thisObj);
+    auto *irType = (ComplexType *)tr.get(thisObj->getType());
+    auto &varName = decl.getObject().getVarName();
+    assert(irType->getMembers().count(varName));
+    auto varIdx = irType->getMembers()[varName].first;
+    auto *addr = builder.CreateStructGEP(thisObj, varIdx);
+    builder.CreateStore(rhsLLVMVal, addr);
+    return true;
   }
+  return false;
 }
 
 // bool FnCodeGen::visitCall(const Call &call) { return false; }
@@ -493,6 +548,7 @@ bool FnCodeGen::visitPrintStatement(const ast::PrintStatement &print) {
   SmallVector<Value *, 4> params;
   for (auto &expr : *print.getArgs()) {
     auto exprVal = exprCG.visitExpression(*expr);
+    assert(exprVal);
     auto valType = exprVal->getType();
     if (valType->isIntegerTy()) {
       params.push_back(exprVal);
@@ -502,6 +558,7 @@ bool FnCodeGen::visitPrintStatement(const ast::PrintStatement &print) {
       ss << "%g ";
     } else {
       auto t = tr.get(exprVal->getType());
+      assert(t && "bug");
       Value *string = exprVal;
       if (t->getName() != "String")
         string = t->dispatch(builder, "__str__", exprVal, {});
@@ -544,7 +601,13 @@ bool FnCodeGen::generate() {
 
   // Emitting IR for body of function
   builder.SetInsertPoint(bb);
-  (void)llvmEnv.addNewScope();
+  auto &scope = llvmEnv.addNewScope();
+
+  // adding arguments to the environment
+  for (auto &arg: args) {
+    scope.insert(arg);
+  }
+
   if (!visitCompoundStmt(fnBody))
     return false;
   auto llvmScope = llvmEnv.popCurrentScope();
@@ -558,18 +621,60 @@ bool FnCodeGen::generate() {
   return true;
 }
 
-bool FnCodeGen::visitTypeAlternatives(const ast::TypeAlternatives &) {
-  return false;
+static llvm::Value *loadVTable(IRBuilder<> &builder, llvm::Value *obj) {
+  auto vtable = builder.CreateStructGEP(obj, 0);
+  return builder.CreateLoad(vtable);
 }
 
-bool FnCodeGen::visitTypeSwitch(const ast::TypeSwitch &) {
-  return false;
+bool FnCodeGen::visitTypeSwitch(const ast::TypeSwitch &typeSwitch) {
+  auto val = exprCG.visitExpression(typeSwitch.getValue());
+  auto valType = tr.get(val->getType());
+  auto vtableType = tr.getObjectVtable();
+  auto vtablePtr = PointerType::get(vtableType, 0);
+  auto is_subtype = getOrCreateFnSym("is_subtype", module, builder.getInt8Ty(),
+                                     {vtablePtr, vtablePtr}, false);
+  auto loadedVtable = loadVTable(builder, val);
+  Function *fn = builder.GetInsertBlock()->getParent();
+  llvm::BasicBlock *mergeBB;
+
+  for (auto &c : typeSwitch.getCases()) {
+    auto &caseType = c->getVarDecl().getType().getName();
+    auto *caseQType = tdb.getType(caseType);
+    auto *caseLLVMType = tr.get(caseQType);
+    auto caseVTableType = caseLLVMType->getVtable();
+    assert(caseVTableType && "must have a vtable by this point, primitives should "
+                         "have been typechecked -- bug");
+    auto caseVtableGetter =
+        getOrCreateFnSym(caseType + "_get_vtable", module,
+                         llvm::PointerType::get(caseVTableType, 0));
+    auto caseVTable = builder.CreateCall(caseVtableGetter);
+    auto res = builder.CreateCall(is_subtype, {caseVTable, loadedVtable});
+    llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(module.getContext(), "typecase.if." + caseType, fn);
+    mergeBB = llvm::BasicBlock::Create(module.getContext(), "typecase.not." + caseType);
+    builder.CreateCondBr(res, thenBB, mergeBB);
+    builder.SetInsertPoint(thenBB);
+    auto &localEnv = llvmEnv.addNewScope();
+    auto bitCastVal = builder.CreateBitCast(val, caseLLVMType->getType());
+    auto alloca = builder.CreateAlloca(caseLLVMType->getType());
+    builder.CreateStore(bitCastVal, alloca);
+    localEnv.insert({c->getVarDecl().getVar().getName(), alloca});
+    if (!visitCompoundStmt(c->getBlock()))
+      return false;
+    if (!c->getBlock().hasReturn())
+      builder.CreateBr(mergeBB);
+    else // Erase potentially empty block
+      removeEmptyBB(builder);
+    llvmEnv.popCurrentScope();
+
+    builder.SetInsertPoint(mergeBB);
+    fn->getBasicBlockList().push_back(mergeBB);
+  }
+  return true;
 }
 
 bool FnCodeGen::visitTypeSwitchCase(const ast::TypeSwitchCase &) {
   return false;
 }
-
 
 // bool FnCodeGen::visitUnaryOperator(const ast::UnaryOperator &unOp) {
 //   return false;

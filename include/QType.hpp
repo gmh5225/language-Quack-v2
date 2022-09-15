@@ -28,6 +28,8 @@
 
 namespace quick::type {
 
+template <typename T> using Table = llvm::StringMap<std::pair<int, T>>;
+
 class QType;
 
 /// Builtin types
@@ -39,7 +41,13 @@ constexpr char BoolStr[] = "Boolean";
 constexpr char NothingStr[] = "Nothing";
 
 static inline bool isPrimitive(const std::string &str) {
-  return (str == IntegerStr || str == FloatStr || str == BoolStr);
+  return (str == IntegerStr || str == FloatStr || str == BoolStr ||
+          str == StringStr || str == NothingStr);
+}
+
+static inline bool isBuiltin(const std::string &str) {
+  return (str == IntegerStr || str == FloatStr || str == BoolStr ||
+          str == StringStr || str == NothingStr || str == ObjectStr);
 }
 
 /// ===-------------------------------------------------------------------=== //
@@ -97,22 +105,29 @@ private:
 class QType {
   QType *parent;
   std::string name;
-  using MembersTable = llvm::MapVector<llvm::StringRef, QType *>;
-  MembersTable members;
-  using MethodTable = llvm::StringMap<std::pair<int, std::unique_ptr<QMethod>>>;
-  MethodTable methods;
-  std::string mangleName(llvm::StringRef mname, llvm::ArrayRef<QType *> argTypes) const;
+  std::unique_ptr<QMethod> constructor = nullptr;
+  Table<QType *> members;
+  Table<std::unique_ptr<QMethod>> methods;
 
 public:
   QType(QType *parent, llvm::StringRef name) : parent(parent), name(name) {}
   bool operator==(const QType &);
   bool operator!=(const QType &);
 
+  std::string mangleName(llvm::StringRef mname,
+                         llvm::ArrayRef<QType *> argTypes) const;
+
+  void setConstructor(std::unique_ptr<QMethod> c) {
+    constructor = std::move(c);
+  }
+
   // Getters
   QType *getParent() { return parent; }
+  QMethod *getConstructor() { return constructor.get(); }
+  void setParent(QType *p) { parent = p; }
   const std::string &getName() const { return name; }
-  MembersTable &getMembers() { return members; }
-  MethodTable &getMethods() { return methods; }
+  auto &getMembers() { return members; }
+  auto &getMethods() { return methods; }
 
   // Builds types members and methods
   bool insertMethod(const std::string &name, QType *retType,
@@ -122,8 +137,8 @@ public:
   // Utility
   QType *lowestCommonAncestor(const QType *) const;
   bool isDescendentOf(const QType *) const;
-  const QMethod *lookUpMethod(llvm::StringRef, llvm::ArrayRef<QType *> argTypes) const;
-  const QType *lookUpMember(llvm::StringRef) const;
+  QMethod *lookUpMethod(llvm::StringRef, llvm::ArrayRef<QType *> argTypes);
+  QType *lookUpMember(llvm::StringRef);
   std::unique_ptr<json::JSONNode> toJson();
 };
 

@@ -21,6 +21,13 @@ public:
   LocalEnvironment(LocalEnvironment &&) = default;
   LocalEnvironment &operator=(LocalEnvironment &&) = default;
   LocalEnvironment copy() { return *this; }
+  void dump() {
+    llvm::errs() << "{";
+    for(auto &[p, t]: *this) {
+      llvm::errs() << p << " ";
+    }
+    llvm::errs() << "}\n";
+  }
 };
 
 /// A nested environment, which is a vector of scopes(local environments)

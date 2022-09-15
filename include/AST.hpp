@@ -206,6 +206,7 @@ public:
   enum class Kind { Ident, MemberAccess };
 
   inline Kind getKind() const { return _kind; }
+  virtual const std::string &getVarName() const = 0;
 
 protected:
   Kind _kind;
@@ -213,6 +214,8 @@ protected:
   LValue(Location loc, Kind kind)
       : Expression(loc, Expression::Kind::LValue), _kind(kind) {}
 };
+
+class IdentifierExpression;
 
 /// ===-------------------------------------------------------------------=== //
 /// MemberAccess
@@ -230,6 +233,7 @@ public:
 
   inline const Identifier &getMember() const { return *_member; }
   inline const Expression &getObject() const { return *_obj; }
+  const std::string &getVarName() const override { return _member->getName(); }
 };
 
 /// ===-------------------------------------------------------------------=== //
@@ -243,6 +247,7 @@ public:
       : LValue(loc, LValue::Kind::Ident), _var(std::move(var)) {}
 
   inline const Identifier &getVar() const { return *_var; }
+  const std::string &getVarName() const override { return _var->getName(); }
 };
 
 /// ===-------------------------------------------------------------------=== //
@@ -499,16 +504,16 @@ public:
 /// Call - A method call
 /// ===-------------------------------------------------------------------=== //
 class Call final : public Expression {
-  std::unique_ptr<Expression> _callee;
+  std::unique_ptr<LValue> _callee;
   std::unique_ptr<Arguments> _args;
 
 public:
-  Call(const Location &loc, std::unique_ptr<Expression> callee,
+  Call(const Location &loc, std::unique_ptr<LValue> callee,
        std::unique_ptr<Arguments> args)
       : Expression(loc, Expression::Kind::Call), _callee(std::move(callee)),
         _args(std::move(args)) {}
 
-  inline const Expression &getCallee() const { return *_callee; }
+  inline const LValue &getCallee() const { return *_callee; }
   inline const Arguments &getArgs() const { return *_args; }
 };
 
@@ -554,16 +559,16 @@ public:
 /// TypeSwitchCase - a case in type_switch statement
 /// ===-------------------------------------------------------------------=== //
 class TypeSwitchCase final : public Statement {
-  std::unique_ptr<Identifier> _type;
+  std::unique_ptr<VarDecl> _varDecl;
   std::unique_ptr<CompoundStmt> _block;
 
 public:
-  TypeSwitchCase(Location loc, std::unique_ptr<Identifier> type,
+  TypeSwitchCase(Location loc, std::unique_ptr<VarDecl> varDecl,
                  std::unique_ptr<CompoundStmt> stmts)
-      : Statement(loc, Statement::Kind::TypeSwitchCase), _type(std::move(type)),
+      : Statement(loc, Statement::Kind::TypeSwitchCase), _varDecl(std::move(varDecl)),
         _block(std::move(stmts)) {}
 
-  inline const Identifier &getCaseType() const { return *_type; }
+  inline const VarDecl &getVarDecl() const { return *_varDecl; }
   inline const CompoundStmt &getBlock() const { return *_block; }
 };
 

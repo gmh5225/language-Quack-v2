@@ -22,11 +22,9 @@
 %}
 
 string_lit  \"(\\.|[^"\\])*\"
-this        this
 class       class
-def         def
+fn          fn
 extends     extends
-weak        weak
 return      return
 true        True
 false       False
@@ -36,8 +34,8 @@ else        else
 elif        elif
 while       while
 print       print
-type_switch type_switch
 case        case
+typecase    typecase
 id          [a-zA-Z][a-zA-Z_0-9]*
 int         [0-9]+
 float       ([0-9]+[.])?[0-9]+
@@ -84,13 +82,12 @@ comment     \/\/[^\n]*
 ";"        return yy::parser::make_SEMICOLON (loc);
 ","        return yy::parser::make_COMMA (loc);
 "!"        return yy::parser::make_NOT(loc);
+"->"       return yy::parser::make_ARROW(loc);
 {int}      return make_INT (yytext, loc);
 {float}    return make_FLOAT (yytext, loc);
-{this}     return yy::parser::make_THIS(yytext, loc);
 {extends}  return yy::parser::make_EXTENDS(yytext, loc);
-{weak}     return yy::parser::make_WEAK(yytext, loc);
 {class}    return yy::parser::make_CLASS (yytext, loc);
-{def}      return yy::parser::make_DEF (yytext, loc);
+{fn}       return yy::parser::make_FN (yytext, loc);
 {return}   return yy::parser::make_RETURN (yytext, loc);
 {none}     return yy::parser::make_NONE (yytext, loc);
 {true}     return yy::parser::make_BOOL (true, loc);
@@ -100,9 +97,9 @@ comment     \/\/[^\n]*
 {elif}     return yy::parser::make_ELIF (yytext, loc);
 {while}    return yy::parser::make_WHILE (yytext, loc);
 {print}    return yy::parser::make_PRINT (yytext, loc);
-{type_switch} return yy::parser::make_TYPE_SWITCH (yytext, loc);
-{id}       return yy::parser::make_IDENT (yytext, loc);
+{typecase} return yy::parser::make_TYPECASE (yytext, loc);
 {case}     return yy::parser::make_CASE (yytext, loc);
+{id}       return yy::parser::make_IDENT (yytext, loc);
 {string_lit} return yy::parser::make_STRING_LIT (yytext, loc);
 .          {
              throw yy::parser::syntax_error

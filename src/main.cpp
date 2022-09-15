@@ -1,3 +1,4 @@
+#include "ClassCodeGen.h"
 #include "FnCodeGen.hpp"
 #include "ParserDriver.hpp"
 #include "PrintVisitor.hpp"
@@ -62,8 +63,8 @@ public:
             DL.getGlobalPrefix())));
     SymbolMap map;
     registerRuntimeFunctions([&](const std::string &sym, void *addr) {
-      map[Mangle(sym)] = JITEvaluatedSymbol(
-          pointerToJITTargetAddress(addr), JITSymbolFlags());
+      map[Mangle(sym)] =
+          JITEvaluatedSymbol(pointerToJITTargetAddress(addr), JITSymbolFlags());
     });
     cantFail(MainJD.define(absoluteSymbols(map)));
   }
@@ -131,8 +132,16 @@ public:
     auto module = std::make_unique<Module>(name, cntx);
     IRBuilder<> builder(cntx);
     quick::codegen::LLVMTypeRegistry tr(*module);
-    quick::codegen::FnCodeGen fnCodeGen(builder, *module,
-                                        root.getCompoundStmt(), tr);
+
+    for (auto &clss : root.getClasses()) {
+      quick::codegen::ClassCodeGen classCodeGen(*clss, *module, builder, tr);
+      if (!classCodeGen.generate())
+        return nullptr;
+    }
+
+    codegen::LLVMEnv env;
+    codegen::FnCodeGen fnCodeGen(builder, *module, root.getCompoundStmt(), tr,
+                                 env);
     if (!fnCodeGen.generate())
       return nullptr;
 
@@ -168,8 +177,9 @@ std::unique_ptr<Module> CodeGen(const TranslationUnit &root, LLVMContext &cntx,
   auto module = std::make_unique<Module>(name, cntx);
   IRBuilder<> builder(cntx);
   quick::codegen::LLVMTypeRegistry tr(*module);
+  codegen::LLVMEnv env;
   quick::codegen::FnCodeGen fnCodeGen(builder, *module, root.getCompoundStmt(),
-                                      tr);
+                                      tr, env);
   if (!fnCodeGen.generate())
     return nullptr;
 

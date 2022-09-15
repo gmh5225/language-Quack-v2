@@ -66,6 +66,7 @@
   RPAREN  ")"
   LBRACK  "{"
   RBRACK  "}"
+  ARROW "->"
 ;
 
 // associating terminals with types
@@ -74,19 +75,17 @@
 %token <bool> BOOL
 %token <std::string> STRING_LIT
 %token <std::string> NONE
-%token <std::string> THIS
 %token <std::string> IDENT
-%token <std::string> WEAK
 %token <std::string> CLASS
 %token <std::string> EXTENDS
-%token <std::string> DEF
+%token <std::string> FN
 %token <std::string> RETURN
 %token <std::string> IF
 %token <std::string> ELIF
 %token <std::string> ELSE
 %token <std::string> WHILE
 %token <std::string> PRINT
-%token <std::string> TYPE_SWITCH
+%token <std::string> TYPECASE
 %token <std::string> CASE
 
 %type <ptr<TranslationUnit>> translationUnit
@@ -126,7 +125,7 @@
 %type <ptr<Classes>> classes
 %type <ptr<Classes>> classesNonEmpty
 %type <ptr<TypeAlternatives>> typeAlts
-%type <ptr<TypeSwitchCase>> typeAlternative
+%type <ptr<TypeSwitchCase>> switchCase
 %type <ptr<TypeSwitch>> typeSwitchStmt
 %%
 
@@ -229,12 +228,12 @@ paramsNonEmpty : varDecl                   { $$ = std::make_unique<Parameters>(l
     | paramsNonEmpty "," varDecl           { $1->push_back(std::move($3)); $$ = std::move($1); }
     ;
 
-method: DEF identifier "(" params ")" ":" identifier "{" compoundStmt "}"
+method: FN identifier "(" params ")" "->" identifier "{" compoundStmt "}"
                                            { $$ = std::make_unique<Method>(
                                                 loc(@1, @10), std::move($4), std::move($2), std::move($7),
                                                 std::move($9));
                                            }
-    | DEF identifier "(" params ")" "{" compoundStmt "}"
+    | FN identifier "(" params ")" "{" compoundStmt "}"
                                            { $$ = std::make_unique<Method>(
                                                 loc(@1, @8), std::move($4), std::move($2),
                                                 std::make_unique<Identifier>(loc(@1, @1), "Nothing"),
@@ -259,7 +258,7 @@ class : CLASS identifier optionalParams "{" compoundStmt methods "}"
                                            {
                                              $$ = std::make_unique<Class>(loc(@1, @7), std::move($6),
                                                   std::make_unique<Identifier>(loc(@2, @2), $2->getName()),
-                                                  std::make_unique<Method>(loc(@1, @7), std::move($3),
+                                                  std::make_unique<Method>(loc(@5, @5), std::move($3),
                                                   std::make_unique<Identifier>(loc(@2, @2), $2->getName()),
                                                   std::move($2), std::move($5)));
                                            }
@@ -267,7 +266,7 @@ class : CLASS identifier optionalParams "{" compoundStmt methods "}"
                                            {
                                             $$ = std::make_unique<Class>(loc(@1, @11), std::move($10),
                                                 std::make_unique<Identifier>(loc(@2, @2), $2->getName()),
-                                                std::make_unique<Method>(loc(@1, @11), std::move($4),
+                                                std::make_unique<Method>(loc(@9, @9), std::move($4),
                                                 std::make_unique<Identifier>(loc(@2, @2), $2->getName()),
                                                 std::move($2), std::move($9)), std::move($7)
                                               );
@@ -297,18 +296,18 @@ lvalueExpression:
     | memberAccessExpression               { $$ = std::move($1); }
     ;
 
+callExpression:
+      lvalueExpression                    { $$ = std::move($1); }
+    | lvalueExpression "(" args ")"       { $$ = std::make_unique<Call>(loc(@1, @4), std::move($1), std::move($3)); }
+    ;
+
 primaryExpression:
       INT                                  { $$ = std::make_unique<IntegerLiteral>(loc(@1, @1), $1); }
     | FLOAT                                { $$ = std::make_unique<FloatLiteral>(loc(@1, @1), $1); }
     | BOOL                                 { $$ = std::make_unique<BoolLiteral>(loc(@1, @1), $1); }
     | NONE                                 { $$ = std::make_unique<NothingLiteral>(loc(@1, @1)); }
     | STRING_LIT                           { $$ = std::make_unique<StringLiteral>(loc(@1, @1), $1); }
-    | lvalueExpression                     { $$ = std::move($1); }
-    ;
-
-callExpression:
-      primaryExpression                    { $$ = std::move($1); }
-    | primaryExpression "(" args ")"       { $$ = std::make_unique<Call>(loc(@1, @4), std::move($1), std::move($3)); }
+    | callExpression                     { $$ = std::move($1); }
     ;
 
 unaryOperator: "!"                  { $$ = UnaryOperator::Operator::Not; }
@@ -316,8 +315,8 @@ unaryOperator: "!"                  { $$ = UnaryOperator::Operator::Not; }
     ;
 
 unaryExpression:
-      callExpression                    { $$ = std::move($1); }
-    | unaryOperator callExpression      { $$ = std::make_unique<UnaryOperator>(loc(@1, @2), $1, std::move($2)); }
+      primaryExpression                    { $$ = std::move($1); }
+    | unaryOperator primaryExpression      { $$ = std::make_unique<UnaryOperator>(loc(@1, @2), $1, std::move($2)); }
     ;
 
 multiplicativeExpression:
@@ -342,15 +341,15 @@ expression: relationalExpression                      { $$ = std::move($1); }
     | "(" expression ")"                              { $$ = std::move($2); }
     ;
 
-typeAlternative: CASE identifier ":" compoundStmt { $$ = std::make_unique<TypeSwitchCase>(loc(@1, @4), std::move($2), std::move($4)); }
+switchCase: varDecl "{" compoundStmt "}" { $$ = std::make_unique<TypeSwitchCase>(loc(@1, @4), std::move($1), std::move($3)); }
     ;
 
 typeAlts: %empty                                  { $$ = std::make_unique<TypeAlternatives>(loc(@$, @$)); }
-    | typeAlts typeAlternative                    { $$ = std::move($1);$$->push_back(std::move($2)); }
+    | typeAlts switchCase                         { $$ = std::move($1); $$->push_back(std::move($2)); }
     ;
 
-typeSwitchStmt: TYPE_SWITCH "(" lvalueExpression ")" "{" typeAlts "}"
-                            { $$ = std::make_unique<TypeSwitch>(loc(@1, @7), std::move($3), std::move($6)); }
+typeSwitchStmt: TYPECASE lvalueExpression "{" typeAlts "}"
+                            { $$ = std::make_unique<TypeSwitch>(loc(@1, @5), std::move($2), std::move($4)); }
     ;
 %%
 

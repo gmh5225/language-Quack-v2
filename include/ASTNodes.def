@@ -47,8 +47,7 @@ AST_NODES
   STMT_NODE_HANDLER(While)                                                     \
   STMT_NODE_HANDLER(PrintStatement)                                            \
   STMT_NODE_HANDLER(TypeSwitch)                                                \
-  STMT_NODE_HANDLER(TypeSwitchCase)                                            \
-  STMT_NODE_HANDLER(TypeAlternatives)
+  STMT_NODE_HANDLER(TypeSwitchCase)
 
 AST_NODES
 #undef AST_NODES

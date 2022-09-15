@@ -11,8 +11,7 @@ namespace quick::sema {
 /// block. Furthermore, it visits every if stmt, because variables defined in
 /// all paths of execution in an if stmt, must be defined in the if stmts parent
 /// environment.
-bool EnvironmentBuilder::visitCompoundStmt(
-    const CompoundStmt &compoundStmt) {
+bool EnvironmentBuilder::visitCompoundStmt(const CompoundStmt &compoundStmt) {
   for (auto &stmt : compoundStmt) {
     switch (stmt->getKind()) {
     case Statement::Kind::StaticAssignment:
@@ -53,6 +52,13 @@ bool EnvironmentBuilder::visitIf(const If &ifStmt) {
   return true;
 }
 
+bool isMemAccessThis(const ast::MemberAccess &memAccess) {
+  if (auto identExpr = memAccess.getObject().as_a<IdentifierExpression>()) {
+    return identExpr->getVarName() == "this";
+  }
+  return false;
+};
+
 bool EnvironmentBuilder::visitStaticAssignment(
     const StaticAssignment &assignment) {
   auto &varDecl = assignment.getDecl();
@@ -69,25 +75,37 @@ bool EnvironmentBuilder::visitStaticAssignment(
     auto &memDecl = static_cast<const StaticMemberDecl &>(varDecl);
     auto *t = exprTC.visitExpression(memDecl.getObject());
     assert(t);
+    //    auto *memberType =
+    //    objType->lookUpMember(memAccess->getMember().getName()); if
+    //    (!memberType && isMemAccessThis(*memAccess)) {
+    //      objType->insertMember(
+    //          type::QVarDecl{rhsType, memAccess->getMember().getName()});
+    //    }
+    if (t->lookUpMember(var)) {
+      logError(file, memDecl.getLocation(),
+               "variable <" + var +
+                   "> already defined in current or super class");
+      return false;
+    }
     t->insertMember(type::QVarDecl{lhsType, var});
   } else {
     auto &decl = static_cast<const VarDecl &>(varDecl);
     auto &var = decl.getVar().getName();
-    if(!env.back().lookup(var))
+    if (!env.back().lookup(var))
       env.back().insert({var, lhsType});
   }
 
   return true;
 }
 
-bool EnvironmentBuilder::visitAssignment(
-    const Assignment &assignment) {
+bool EnvironmentBuilder::visitAssignment(const Assignment &assignment) {
   sema::Scope &scope = env.back();
 
   auto rhsType = exprTC.visitExpression(assignment.getRHS());
   assert(rhsType);
 
-  if (auto *ident = dynamic_cast<const IdentifierExpression *>(&assignment.getLHS())) {
+  if (auto *ident =
+          dynamic_cast<const IdentifierExpression *>(&assignment.getLHS())) {
     auto &var = ident->getVar().getName();
     if (!env.contains(var)) {
       scope.insert({var, rhsType});
@@ -98,19 +116,22 @@ bool EnvironmentBuilder::visitAssignment(
     assert(objType);
 
     auto *memberType = objType->lookUpMember(memAccess->getMember().getName());
-    if (!memberType) {
-      objType->insertMember(
-          type::QVarDecl{rhsType, memAccess->getMember().getName()});
+    if (!memberType && isMemAccessThis(*memAccess)) {
+      if (objType->lookUpMember(memAccess->getMember().getName())) {
+        objType->insertMember(
+            type::QVarDecl{rhsType, memAccess->getMember().getName()});
+      }
     }
   }
 
   return true;
 }
 
-sema::Scope &EnvironmentBuilder::update(const CompoundStmt &body, Env &env, std::fstream &file) {
+sema::Scope &EnvironmentBuilder::update(const CompoundStmt &body, Env &env,
+                                        std::fstream &file) {
   EnvironmentBuilder envBuilder(file, env);
   envBuilder.visitCompoundStmt(body);
   return env.back();
 }
 
-} // namespace quick
+} // namespace quick::sema

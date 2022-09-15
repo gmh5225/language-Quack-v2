@@ -29,17 +29,17 @@ typedef struct Q_Nothing Nothing_t;
 /// ===-------------------------------------------------------------------=== //
 /// Object Type -- every other class inherits its vtable and members
 /// ===-------------------------------------------------------------------=== //
-typedef struct Q_Object_vtable {
+typedef struct Q_Object_vtable Object_vtable_t;
+struct Q_Object_vtable {
+  Object_vtable_t *superVtable;
   bool (*__eq__Object)(Object_t *, Object_t *);
   bool (*__ne__Object)(Object_t *, Object_t *);
   String_t *(*__str__)(Object_t *);
   void (*__del__)(Object_t *);
-} Object_vtable_t;
+};
 
 struct Q_Object {
   Object_vtable_t *vtable;
-  int32_t __ref;
-  int32_t __id;
 };
 
 bool Object__eq__Object(Object_t *, Object_t *);
@@ -47,15 +47,14 @@ bool Object__ne__Object(Object_t *, Object_t *);
 String_t *Object__str__(Object_t *);
 void Object__del__(Object_t *);
 
-static Object_vtable_t ObjectVtable = {Object__eq__Object, Object__ne__Object,
-                                       Object__str__, Object__del__};
-
 Object_t *Object_create();
+Object_vtable_t *Object_get_vtable();
 
 /// ===-------------------------------------------------------------------=== //
 /// Nothing Type
 /// ===-------------------------------------------------------------------=== //
 typedef struct Q_Nothing_vtable {
+  Object_vtable_t *superVtable;
   bool (*__eq__Object)(Object_t *, Object_t *);    // inherit
   bool (*__ne__Object)(Object_t *, Object_t *);    // inherit
   String_t *(*__str__)(Nothing_t *);               // override
@@ -66,8 +65,6 @@ typedef struct Q_Nothing_vtable {
 
 struct Q_Nothing {
   Nothing_vtable_t *vtable;
-  int32_t __ref;
-  int32_t __id;
 };
 
 String_t *Nothing__str__(Nothing_t *);
@@ -75,16 +72,14 @@ void Nothing__del__(Nothing_t *);
 bool Nothing__eq__Nothing(Nothing_t *, Nothing_t *);
 bool Nothing__ne__Nothing(Nothing_t *, Nothing_t *);
 
-static Nothing_vtable_t NothingVtable = {
-    Object__eq__Object, Object__ne__Object,   Nothing__str__,
-    Nothing__del__,     Nothing__eq__Nothing, Nothing__ne__Nothing};
-
 Nothing_t *Nothing_create();
+Nothing_vtable_t *Nothing_get_vtable();
 
 /// ===-------------------------------------------------------------------=== //
 /// String Type
 /// ===-------------------------------------------------------------------=== //
 typedef struct Q_String_vtable {
+  Object_vtable_t *superVtable;
   bool (*__eq__Object)(Object_t *, Object_t *);       // inherit
   bool (*__ne__Object)(Object_t *, Object_t *);       // inherit
   String_t *(*__str__)(String_t *);                   // override
@@ -96,8 +91,6 @@ typedef struct Q_String_vtable {
 
 struct Q_String {
   String_vtable_t *vtable;
-  int32_t __ref;
-  int32_t __id;
   void *__data;
 };
 
@@ -107,11 +100,13 @@ bool String__ne__String(String_t *, String_t *);
 void String__del__(String_t *);
 String_t *String__add__String(String_t *, String_t *);
 
-static String_vtable_t StringVtable = {
-    Object__eq__Object, Object__ne__Object, String__str__,      String__del__,
-    String__eq__String, String__ne__String, String__add__String};
-
 String_t *String_create(const char *str);
+String_vtable_t *String_get_vtable();
+
+/// ===-------------------------------------------------------------------=== //
+/// runtime function for checking if type a is a subtype of type b
+/// ===-------------------------------------------------------------------=== //
+bool is_subtype(Object_vtable_t *a, Object_vtable_t *b);
 }
 
 /// ===-------------------------------------------------------------------=== //
