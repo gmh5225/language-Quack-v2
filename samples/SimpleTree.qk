@@ -1,0 +1,22 @@
+class Node(data: Object) {
+    this.data = data;
+    fn printTree() { print this.data; }
+}
+
+class LeafNode(data: Object) extends Node {
+    Node(data);
+}
+
+class BinNode(data: Object, LHS: Node, RHS: Node) extends Node {
+    Node(data);
+    this.LHS = LHS;
+    this.RHS = RHS;
+    fn printTree() {
+        print this.data;
+        this.LHS.printTree();
+        this.RHS.printTree();
+    }
+}
+
+root = BinNode("2", LeafNode("1"), LeafNode("3"));
+root.printTree();

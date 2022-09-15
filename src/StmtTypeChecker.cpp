@@ -88,7 +88,7 @@ bool StmtVerifier::visitAssignment(const ast::Assignment &assignment) {
       objType->insertMember(
           type::QVarDecl{rhsType, memAccess->getMember().getName()});
 
-    } else if (memberType != rhsType || !rhsType->isDescendentOf(memberType)) {
+    } else if (memberType->getName() != rhsType->getName() && !rhsType->isDescendentOf(memberType)) {
       logError(file, assignment.getLocation(),
                "Conflict between rhs type <" + rhsType->getName() +
                    "> and lhs type <" + memberType->getName() + ">");

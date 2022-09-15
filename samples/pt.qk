@@ -1,0 +1,15 @@
+class Pt(x: Integer, y: Integer) {
+    this.x = x;
+    this.y = y;
+    fn getX() -> Integer { return this.x; }
+    fn getY() -> Integer { return this.y; }
+}
+
+class Pt3D(x: Integer, y: Integer, z: Integer) extends Pt {
+   Pt(x, y);
+   this.z = z;
+   fn getZ() -> Integer { return this.z; }
+}
+
+pt = Pt3D(1, 2, 3);
+print pt.getX(), pt.getY(), pt.getZ();

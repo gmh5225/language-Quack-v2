@@ -1,0 +1,22 @@
+// RUN: %quick %s | %file-check %s
+
+class BoxedInt(int: Integer) {
+    this.int = int;
+    fn get() -> Integer { return this.int; }
+    fn __add__(other: BoxedInt) -> BoxedInt { return BoxedInt(this.int + other.int); }
+    fn __sub__(other: BoxedInt) -> BoxedInt { return BoxedInt(this.int - other.int); }
+    fn __mul__(other: BoxedInt) -> BoxedInt { return BoxedInt(this.int * other.int); }
+    fn __div__(other: BoxedInt) -> BoxedInt { return BoxedInt(this.int / other.int); }
+    fn __mod__(other: BoxedInt) -> BoxedInt { return BoxedInt(this.int % other.int); }
+    fn __eq__(other: BoxedInt) -> Boolean { return this.int == other.int; }
+    fn __ne__(other: BoxedInt) -> Boolean { return this.int != other.int; }
+    fn __lt__(other: BoxedInt) -> Boolean { return this.int < other.int; }
+    fn __le__(other: BoxedInt) -> Boolean { return this.int <= other.int; }
+    fn __gt__(other: BoxedInt) -> Boolean { return this.int > other.int; }
+    fn __ge__(other: BoxedInt) -> Boolean { return this.int >= other.int; }
+}
+
+int1 = BoxedInt(1);
+int2 = BoxedInt(1);
+// CHECK: 0
+print int2 < int1;

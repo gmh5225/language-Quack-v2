@@ -58,3 +58,7 @@
 1371	2787	1663231689021818720	quick	cc6a086935e0e107
 1	1405	1663231776338887633	src/CMakeFiles/quick.dir/ClassVerifier.cpp.o	1cd3256cb939aa13
 1405	2836	1663231777774905349	quick	cc6a086935e0e107
+2	1365	1663240245674773595	src/CMakeFiles/quick.dir/StmtTypeChecker.cpp.o	b9560e8d1bcc13e4
+1365	2723	1663240247030790516	quick	cc6a086935e0e107
+2	124	0	test/CMakeFiles/check	786fcd0d93534480
+2	124	0	/home/parsab/dev/Quack-v2/cmake-build-debug/test/CMakeFiles/check	786fcd0d93534480
