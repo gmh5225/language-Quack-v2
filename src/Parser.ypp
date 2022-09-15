@@ -247,7 +247,7 @@ methods: methodsNonEmpty                   { $$ = std::move($1); }
 
 methodsNonEmpty : method                   { $$ = std::make_unique<Methods>(loc(@1, @1));
                                              $$->push_back(std::move($1)); }
-    | methodsNonEmpty "," method           { $1->push_back(std::move($3)); $$ = std::move($1); }
+    | methodsNonEmpty method           { $1->push_back(std::move($2)); $$ = std::move($1); }
     ;
 
 optionalParams: %empty                      { $$ = std::make_unique<Parameters>(loc(@$, @$)); }

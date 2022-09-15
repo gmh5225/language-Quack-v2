@@ -92,7 +92,7 @@ bool QType::insertMethod(const std::string &methodName, QType *retType,
   if (methods.count(mName) != 0)
     return false;
 
-  auto isConstructor = [&] { return name == mName; };
+  auto isConstructor = [&] { return name == methodName; };
 
   auto isOverride = [&]() -> Optional<QMethod *> {
     QType *p = parent;
@@ -185,8 +185,10 @@ QMethod *QType::lookUpMethod(llvm::StringRef mname,
 QType *QType::lookUpMember(llvm::StringRef mname) {
   QType *p = this;
   while (p) {
-    if (p->members.count(mname))
-      return members.find(mname)->second.second;
+    if (p->members.count(mname)) {
+      auto &t = *p->members.find(mname);
+      return t.second.second;
+    }
 
     p = p->parent;
   }

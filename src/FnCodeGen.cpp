@@ -117,6 +117,12 @@ llvm::Value *ExprCodeGen::visitNothingLiteral(const ast::NothingLiteral &) {
 }
 
 llvm::Value *ExprCodeGen::visitCall(const ast::Call &call) {
+  std::vector<Value *> argVals;
+  for (auto &arg: call.getArgs()) {
+    auto *argVal = visitExpression(*arg);
+    assert(argVal);
+    argVals.push_back(argVal);
+  }
   if (call.getCallee().getKind() == LValue::Kind::Ident) {
     // maybe constructor
     auto *ident = static_cast<const IdentifierExpression *>(&call.getCallee());
@@ -124,16 +130,16 @@ llvm::Value *ExprCodeGen::visitCall(const ast::Call &call) {
     assert(irType);
     // constructor
     auto *constructor = getOrCreateFnSym(ident->getVarName() + "_create", module, nullptr, false);
-    std::vector<Value *> argVals;
-    for (auto &arg: call.getArgs()) {
-      auto *argVal = visitExpression(*arg);
-      assert(argVal);
-      argVals.push_back(argVal);
-    }
     return builder.CreateCall(constructor, argVals);
   } else {
-    // TODO
-    return nullptr;
+    auto *memAccess = static_cast<const MemberAccess *>(&call.getCallee());
+    auto &methodName = call.getCallee().getVarName();
+    auto *obj = visitExpression(memAccess->getObject());
+    assert(obj);
+    auto irType = typeRegistery.get(obj->getType());
+    assert(irType);
+    std::vector<Value *> args;
+    return irType->dispatch(builder, methodName.c_str(), obj, argVals, &module);
   }
 }
 
@@ -468,7 +474,7 @@ bool FnCodeGen::visitAssignment(const Assignment &assignment) {
   } else {
     auto *memAccess = static_cast<const MemberAccess *>(&assignment.getLHS());
     auto val = exprCG.visitExpression(memAccess->getObject());
-    auto *irType = (ComplexType *)tr.get(PointerType::get(val->getType(), 0));
+    auto *irType = (ComplexType *)tr.get(val->getType());
     assert(irType);
     auto idx = irType->getMembers()[memAccess->getVarName()].first;
     auto ptr = builder.CreateStructGEP(val, idx);
@@ -502,7 +508,9 @@ bool FnCodeGen::visitStaticAssignment(const StaticAssignment &assignment) {
     auto &decl = static_cast<const StaticMemberDecl&>(assignment.getDecl());
     auto *thisObj = llvmEnv.lookup("this");
     assert(thisObj);
+    thisObj = builder.CreateLoad(thisObj);
     auto *irType = (ComplexType *)tr.get(thisObj->getType());
+    assert(irType);
     auto &varName = decl.getObject().getVarName();
     assert(irType->getMembers().count(varName));
     auto varIdx = irType->getMembers()[varName].first;

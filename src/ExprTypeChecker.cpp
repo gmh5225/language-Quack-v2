@@ -144,7 +144,7 @@ type::QType *ExprTypeChecker::visitCall(const Call &call) {
       return nullptr;
     }
 
-    if (!type->getConstructor()) {
+    if (!type->getConstructor() || type::isPrimitive(type->getName())) {
       logError(file, call.getLocation(), "this type has no constructor <" + type->getName() + ">");
       return nullptr;
     }
@@ -172,13 +172,13 @@ ExprTypeChecker::visitMemberAccess(const MemberAccess &memberAccess) {
   if (!type)
     return nullptr;
 
-  if (type->getMembers().count(memberAccess.getVarName()) == 0) {
-    logError(file, memberAccess.getLocation(),
-             "type <" + type->getName() + "> has no member <" +
-                 memberAccess.getVarName() + ">");
-    return nullptr;
-  }
-  return type->lookUpMember(memberAccess.getVarName());
+  if (auto memberT = type->lookUpMember(memberAccess.getVarName()))
+    return memberT;
+
+  logError(file, memberAccess.getLocation(),
+           "type <" + type->getName() + "> has no member <" +
+               memberAccess.getVarName() + ">");
+  return nullptr;
 }
 
 type::QType *

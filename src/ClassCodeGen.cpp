@@ -5,11 +5,73 @@
 #include "ClassCodeGen.h"
 
 namespace quick::codegen {
-bool ClassCodeGen::visitClass(const quick::Class &) { return true; }
+bool ClassCodeGen::visitClass(const quick::Class &clss) {
+  for (auto &m : clss.getMethods()) {
+    if (!visitMethod(*m))
+      return false;
+  }
+  return true;
+}
 
 bool ClassCodeGen::visitMethods(const quick::Methods &) { return false; }
 
-bool ClassCodeGen::visitMethod(const quick::Method &) { return false; }
+bool ClassCodeGen::visitMethod(const quick::Method &method) {
+  LLVMEnv env;
+  auto &scope = env.addNewScope();
+  auto &retTypeName = method.getReturnType().getName();
+  auto *retType = tr.get(retTypeName);
+  //  getOrCreateFnSym()
+  std::vector<Type *> argTypes;
+  auto *irType = tr.get(qType);
+  argTypes.push_back(irType->getType());
+
+  auto methodName = qType->getName() + method.getMethodIdent().getName();
+  for (auto &p : method.getParams()) {
+    auto &pName = p->getVar().getName();
+    auto t = tr.get(p->getType().getName());
+    assert(t);
+    argTypes.push_back(t->getType());
+    methodName += p->getType().getName();
+    //    auto storage = builder.CreateAlloca(t->getType());
+    //    builder.CreateStore()
+    //    scope.insert({pName, storage});
+  }
+
+  auto fn = module.getFunction(methodName);
+  auto *bb = llvm::BasicBlock::Create(module.getContext(), methodName, fn);
+  builder.SetInsertPoint(bb);
+  FnCodeGen::Args args;
+  auto &params = method.getParams();
+  for (size_t i = 0, end = params.size(); i < end; i++) {
+    auto val = fn->getArg(i + 1);
+    args.push_back({params[i]->getVar().getName(), val});
+  }
+
+  auto thisArg = fn->getArg(0);
+  auto *storage = builder.CreateAlloca(thisArg->getType());
+  builder.CreateStore(thisArg, storage);
+  scope.insert({"this", storage});
+  for (auto &arg : args) {
+    auto *s = builder.CreateAlloca(arg.second->getType());
+    builder.CreateStore(arg.second, s);
+    scope.insert({arg.first, s});
+  }
+
+  FnCodeGen methodCodeGen(builder, module, method.getBody(), tr, env, qType,
+                          method.getMethodIdent().getName(), retType, args);
+  if (!methodCodeGen.visitCompoundStmt(method.getBody()))
+    return false;
+
+  if (!fn->getBasicBlockList().back().getTerminator()) {
+    IRBuilder<>::InsertPointGuard g(builder);
+    builder.SetInsertPoint(&fn->getBasicBlockList().back(),
+                           fn->getBasicBlockList().back().end());
+    auto val = builder.CreateCall(module.getFunction("Nothing_create"));
+    builder.CreateRet(val);
+  }
+
+  return true;
+}
 
 bool ClassCodeGen::generateCreateFunction(llvm::Function *createFn,
                                           llvm::Function *initFn,
@@ -31,34 +93,31 @@ bool ClassCodeGen::generateCreateFunction(llvm::Function *createFn,
   auto memPtr = builder.CreateCall(
       mallocFn, {builder.getInt(APInt(64, size.getFixedSize()))});
   auto thisPtr = builder.CreateBitCast(memPtr, llvm::PointerType::get(type, 0));
-
-  auto vtableArrType = llvm::ArrayType::get(llvm::Type::getInt8PtrTy(cntx),
-                                            vtable->getNumElements());
+  //
+  //  auto vtableArrType = llvm::ArrayType::get(llvm::Type::getInt8PtrTy(cntx),
+  //                                            vtable->getNumElements());
   // Generate global vtable instance and set it as objects vtable
   auto vtableInstName = std::string(typeName) + "Vtable";
-  auto globalVtable =
-      module.getOrInsertGlobal(vtableInstName, vtableArrType, [&]() {
-        std::vector<Constant *> funcs(methodTable.size() + 1);
-        llvm::Constant *superVtableInst = module.getOrInsertGlobal(
-            std::string(super->getName()) + "Vtable", super->getVtable());
-        assert(superVtableInst);
-        funcs[0] = superVtableInst;
-        for (auto &entry : methodTable) {
-          std::string fnName = entry.first();
-          fnName.insert(0, entry.second.second.second->getName());
-          auto fn =
-              module.getOrInsertFunction(fnName, entry.second.second.first);
-          if (auto fnGv = dyn_cast<GlobalValue>(fn.getCallee())) {
-            funcs[entry.second.first] = fnGv;
-          }
-        }
-        auto constantStruct = ConstantStruct::get(vtable, funcs);
-        auto gv =
-            new GlobalVariable(module, vtable, true,
-                               llvm::GlobalValue::LinkageTypes::InternalLinkage,
-                               constantStruct, vtableInstName);
-        return gv;
-      });
+  auto globalVtable = module.getOrInsertGlobal(vtableInstName, vtable, [&]() {
+    std::vector<Constant *> funcs(methodTable.size() + 1);
+    llvm::Constant *superVtableInst = module.getOrInsertGlobal(
+        std::string(super->getName()) + "Vtable", super->getVtable());
+    assert(superVtableInst);
+    funcs[0] = superVtableInst;
+    for (auto &entry : methodTable) {
+      std::string fnName = entry.first();
+      fnName.insert(0, entry.second.second.second->getName());
+      auto fn = module.getOrInsertFunction(fnName, entry.second.second.first);
+      if (auto fnGv = dyn_cast<GlobalValue>(fn.getCallee())) {
+        funcs[entry.second.first] = fnGv;
+      }
+    }
+    auto constantStruct = ConstantStruct::get(vtable, funcs);
+    auto gv = new GlobalVariable(
+        module, vtable, true, llvm::GlobalValue::LinkageTypes::InternalLinkage,
+        constantStruct, vtableInstName);
+    return gv;
+  });
 
   auto vtablePtr = builder.CreateStructGEP(thisPtr, 0);
   builder.CreateStore(globalVtable, vtablePtr);
@@ -83,17 +142,29 @@ bool ClassCodeGen::generateInitFunction(llvm::Function *initFn,
   builder.SetInsertPoint(bb);
 
   FnCodeGen::Args args;
-  for (const auto &param : constructor.getParams()) {
-    args.push_back({param->getVar().getName(), nullptr});
-  }
-  for (size_t i = 0, end = args.size(); i < end; i++) {
-    args[i].second = initFn->getArg(i);
+  auto &params = constructor.getParams();
+  for (size_t i = 0, end = params.size(); i < end; i++) {
+    auto val = initFn->getArg(i + 1);
+    args.push_back({params[i]->getVar().getName(), val});
   }
 
   auto irType = tr.get(qType);
   LLVMEnv env;
   auto &scope = env.addNewScope();
-  scope.insert({"this", initFn->getArg(0)});
+  auto thisArg = initFn->getArg(0);
+  auto *storage = builder.CreateAlloca(thisArg->getType());
+  builder.CreateStore(thisArg, storage);
+  scope.insert({"this", storage});
+  for (auto &arg : args) {
+    auto *s = builder.CreateAlloca(arg.second->getType());
+    builder.CreateStore(arg.second, s);
+    scope.insert({arg.first, s});
+  }
+  //  for(auto &arg: initFn->args()) {
+  //    auto *storage = builder.CreateAlloca(arg.getType());
+  //    builder.CreateStore(&arg, storage);
+  //    scope.insert()
+  //  }
   FnCodeGen constructorCodeGen(builder, module, constructor.getBody(), tr, env,
                                qType, typeName + "_init", irType, args);
 
@@ -108,6 +179,8 @@ bool ClassCodeGen::generateInitFunction(llvm::Function *initFn,
 
           // initializing super members
           std::vector<llvm::Value *> arguments;
+          arguments.push_back(builder.CreateBitCast(
+              thisArg, superInitFn->getArg(0)->getType()));
           for (auto &arg : call->getArgs()) {
             auto val =
                 constructorCodeGen.getExprCodeGen().visitExpression(*arg);
@@ -130,8 +203,14 @@ bool ClassCodeGen::generateInitFunction(llvm::Function *initFn,
 }
 
 MethodTable ClassCodeGen::generateVTable(IRType *irType, StructType *vtable) {
-  std::vector<std::pair<StringRef, FunctionType *>> newMethods(
-      qType->getMethods().size());
+
+  auto numNewMethods = 0;
+  for (auto &p : qType->getMethods()) {
+    if (p.second.second->getKind() == type::QMethod::Kind::New)
+      numNewMethods++;
+  }
+  std::vector<std::pair<std::string, FunctionType *>> newMethods(numNewMethods);
+
   MethodTable methodTable = super->getMethodTable();
   for (auto &p : qType->getMethods()) {
     std::string methodName = p.first();
@@ -152,7 +231,7 @@ MethodTable ClassCodeGen::generateVTable(IRType *irType, StructType *vtable) {
       auto &m = methodTable[methodName];
       m.second = {fnType, irType};
     } else {
-      newMethods[p.second.first] = {methodName, fnType};
+      newMethods[p.second.first] = {std::move(methodName), fnType};
     }
   }
   updateMethodTable(irType, methodTable, newMethods, vtable, superVtable);
@@ -160,11 +239,13 @@ MethodTable ClassCodeGen::generateVTable(IRType *irType, StructType *vtable) {
 }
 
 type::Table<Type *> ClassCodeGen::generateMemberTable() {
-  type::Table<Type *> memberTable;
+  type::Table<Type *> memberTable = super->getMembers();
+  int cntr = memberTable.size();
   for (auto &member : qType->getMembers()) {
     auto memberType = tr.get(member.second.second);
     assert(memberType);
-    memberTable[member.first()] = {member.second.first, memberType->getType()};
+    memberTable[member.first()] = {member.second.first + cntr,
+                                   memberType->getType()};
   }
 
   return memberTable;
@@ -250,7 +331,7 @@ bool ClassCodeGen::generate() {
 
   // Creating the create function
   if (!generateCreateFunction(createFn, initFn, irType->getStructType(), vtable,
-                         irType->getMethodTable())) {
+                              irType->getMethodTable())) {
     return false;
   }
 

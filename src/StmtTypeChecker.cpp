@@ -204,7 +204,8 @@ bool StmtVerifier::visitReturn(const ast::Return &returnStmt) {
       if (!retType)
         return false;
 
-      if (retType != returnType && !retType->isDescendentOf(returnType)) {
+//      llvm::errs() <<  << "  " <<  << "\n";
+      if (retType->getName() != returnType->getName() && !retType->isDescendentOf(returnType)) {
         logError(file, returnStmt.getLocation(),
                  "Expected <" + returnType->getName() +
                      "> type to be returned but got <" + retType->getName() +

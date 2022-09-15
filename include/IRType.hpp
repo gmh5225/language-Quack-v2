@@ -156,7 +156,7 @@ public:
 
 void updateMethodTable(
     codegen::IRType *type, MethodTable &methodTable,
-    const std::vector<std::pair<llvm::StringRef, llvm::FunctionType *>>
+    const std::vector<std::pair<std::string, llvm::FunctionType *>>
         &newMethods,
     llvm::StructType *vtable, llvm::StructType *superVtable);
 

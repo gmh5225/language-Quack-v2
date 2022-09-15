@@ -1,0 +1,17 @@
+// RUN: %quick %s | %file-check %s
+
+class Pt2D() {
+    this.x: Float = 1.0;
+    fn getX() -> Float { return this.x; }
+}
+
+class Pt3D() extends Pt2D {
+    Pt2D();
+    this.z: Float = 2.0;
+    fn getX() -> Float { return this.z; }
+}
+
+obj: Pt2D = Pt3D();
+
+// CHECK: 2
+print obj.getX();

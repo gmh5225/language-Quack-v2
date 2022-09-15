@@ -16,21 +16,21 @@ static inline llvm::Type *ptr(llvm::Type *t) {
 }
 
 void updateMethodTable(
-    codegen::IRType *type,
-    MethodTable &methodTable,
-    const std::vector<std::pair<StringRef, FunctionType *>> &newMethods,
+    codegen::IRType *type, MethodTable &methodTable,
+    const std::vector<std::pair<std::string, FunctionType *>> &newMethods,
     llvm::StructType *vtable, llvm::StructType *superVtable) {
+
   auto numCurMethods = methodTable.size() + 1;
   for (auto &p : newMethods) {
     if (methodTable.count(p.first)) {
       // update fn ptr
-      std::get<1>(methodTable[p.first]) = {p.second, type};
+      methodTable[p.first].second = {p.second, type};
     } else {
       methodTable.insert({p.first, {numCurMethods++, {p.second, type}}});
     }
   }
 
-  std::vector<Type *> ordered_vtable(methodTable.size() + 1);
+  std::vector<Type *> ordered_vtable(numCurMethods);
   ordered_vtable[0] = ptr(superVtable);
   for (auto &p : methodTable) {
     ordered_vtable[std::get<0>(p.second)] = ptr(std::get<1>(p.second).first);
@@ -57,8 +57,6 @@ buildObjectType(LLVMTypeRegistry &tr, llvm::Module &module,
       llvm::FunctionType::get(llvm::Type::getVoidTy(cntx), {ptr(type)}, false);
   //  vtable->setBody({ptr(vtable), ptr(eqFn), ptr(strFn), ptr(delFn)});
 
-
-
   FunctionType *constructorTy = FunctionType::get(ptr(type), {}, false);
   auto *constructor = Function::Create(
       constructorTy, GlobalValue::ExternalLinkage, "Object_create", module);
@@ -74,8 +72,7 @@ buildObjectType(LLVMTypeRegistry &tr, llvm::Module &module,
   methodTable.insert({"__str__", {cntr++, {strFn, objT.get()}}});
   methodTable.insert({"__del__", {cntr++, {delFn, objT.get()}}});
   updateMethodTable(irType, methodTable, {}, vtable, vtable);
-  return { std::move(objT),
-          vtable};
+  return {std::move(objT), vtable};
 }
 
 static std::unique_ptr<NothingType>
@@ -99,16 +96,17 @@ buildNothingType(LLVMTypeRegistry &tr, llvm::Module &module,
                                       {ptr(type), ptr(type)}, false);
   auto neFn = eqFn;
 
-  auto nothingT = std::make_unique<NothingType>(tr, module, type, super,
-                                super->getMethodTable(), vtable);
-  std::vector<std::pair<StringRef, FunctionType *>> newMethods = {
+  auto nothingT = std::make_unique<NothingType>(
+      tr, module, type, super, super->getMethodTable(), vtable);
+  std::vector<std::pair<std::string, FunctionType *>> newMethods = {
       {"__str__", strFn},
       {"__del__", delFn},
       {"__eq__Nothing", eqFn},
       {"__ne__Nothing", neFn}};
 
   auto &methodTable = nothingT->getMethodTable();
-  updateMethodTable(nothingT.get(), methodTable, newMethods, vtable, objectVtable);
+  updateMethodTable(nothingT.get(), methodTable, newMethods, vtable,
+                    objectVtable);
   FunctionType *constructorTy = FunctionType::get(ptr(type), {}, false);
 
   auto *constructor = Function::Create(
@@ -144,17 +142,17 @@ buildStringType(LLVMTypeRegistry &tr, llvm::Module &module,
   //  vtable->setBody({ptr(eqFn), ptr(strFn), ptr(delFn), ptr(addFn)});
 
   auto stringT = std::make_unique<StringType>(tr, module, type, super,
-                               super->getMethodTable(), vtable);
-  auto &methodTable =
-      stringT->getMethodTable();
-  std::vector<std::pair<StringRef, FunctionType *>> newMethods = {
+                                              super->getMethodTable(), vtable);
+  auto &methodTable = stringT->getMethodTable();
+  std::vector<std::pair<std::string, FunctionType *>> newMethods = {
       {"__eq__String", eqFn},
       {"__ne__String", neFn},
       {"__str__", strFn},
       {"__del__", delFn},
       {"__add__String", addFn}};
 
-  updateMethodTable(stringT.get(), methodTable, newMethods, vtable, objectVtable);
+  updateMethodTable(stringT.get(), methodTable, newMethods, vtable,
+                    objectVtable);
 
   FunctionType *constructorTy =
       FunctionType::get(ptr(type), {llvm::Type::getInt8PtrTy(cntx)}, false);
@@ -373,8 +371,7 @@ llvm::Value *ComplexType::alloc(IRBuilder<> &b) {
 std::unique_ptr<ComplexType>
 ComplexType::create(LLVMTypeRegistry &tr, Module &module, llvm::StringRef name,
                     ComplexType *super, Table<llvm::Type *> members,
-                    MethodTable methodTable,
-                    StructType *vtable) {
+                    MethodTable methodTable, StructType *vtable) {
 
   // adding vtable as the first element
   std::vector<llvm::Type *> allMembers(members.size() + 1);

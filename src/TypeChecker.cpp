@@ -75,9 +75,17 @@ static int processMembers(std::fstream &file, type::QTypeDB &tdb,
 //    }
 
     sema::Env env;
+    auto &scope = env.addNewScope();
+    scope.insert({"this", type});
+    for (auto &params: clss->getConstructor().getParams()) {
+      auto &pt = params->getType().getName();
+      auto &v = params->getVar().getName();
+      auto *pQtype  = tdb.getType(pt);
+      scope.insert({v, pQtype});
+    }
     StmtVerifier constructorVerifier(file, clss->getConstructor().getBody(),
                                      env, type, type, true);
-    if (!constructorVerifier.isLegal())
+    if (!constructorVerifier.visitCompoundStmt(clss->getConstructor().getBody()))
       numErrors++;
   }
   return numErrors;
@@ -117,7 +125,7 @@ static int processMethods(std::fstream &file, type::QTypeDB &tdb,
     auto super = clss->getSuper();
     auto &className = clss->getClassIdent().getName();
     auto type = tdb.getType(className);
-    auto process = [&](const Method *m, bool isConstructor = false){
+    auto process = [&](const Method *m){
       std::vector<type::QVarDecl> formals;
       bool status = true;
       for (auto &p : m->getParams()) {
@@ -176,6 +184,7 @@ bool TypeChecker::verify() {
 
   numErrors += registerClasses(file, tdb, tu.getClasses());
   numErrors += processSuperTypes(file, tdb, tu.getClasses());
+  numErrors += processMethods(file, tdb, tu.getClasses());
   numErrors += processMembers(file, tdb, tu.getClasses());
   for (auto &clss : tu.getClasses()) {
     if (hasCircularInheritance(*clss, tdb)) {
@@ -184,7 +193,6 @@ bool TypeChecker::verify() {
       return false;
     }
   }
-  numErrors += processMethods(file, tdb, tu.getClasses());
 
   if (numErrors) {
     std::cerr << "total errors: " << numErrors << "\n";
